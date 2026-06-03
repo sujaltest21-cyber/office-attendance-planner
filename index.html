@@ -20,6 +20,9 @@
             --text-main: #334155;
             --text-light: #64748b;
             --border-color: #e2e8f0;
+            /* નવો બ્લુ કલર ઓવરટાઇમ હાજરી માટે */
+            --blue-color: #3b82f6;
+            --blue-bg: #dbeafe;
         }
 
         body {
@@ -245,144 +248,7 @@
             padding: 8px 16px;
             border-radius: 9999px;
             font-weight: 600;
-            font-size: 0.85rem;
-            white-space: nowrap;
-        }
-
-        /* Capture Box Area */
-        .download-capture-area {
-            background: #ffffff;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .download-header {
-            text-align: center;
-            border-bottom: 2px dashed var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        .download-header h2 { margin: 0; color: var(--primary-color); font-size: 1.5rem; }
-        .download-header p { margin: 4px 0 0 0; font-weight: 700; color: var(--text-light); font-size: 0.95rem; }
-
-        .summary-wrapper { display: flex; flex-direction: column; gap: 20px; }
-
-        @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } }
-
-        .panel-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid var(--border-color);
-        }
-
-        .panel-title {
-            margin: 0 0 14px 0;
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-        }
-
-        .report-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-        @media (min-width: 480px) { .report-grid { grid-template-columns: repeat(2, 1fr); } }
-
-        .report-item { padding: 10px 14px; background: var(--bg-color); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; }
-        .report-item span { font-weight: 700; color: var(--primary-color); }
-
-        .extra-container { grid-column: 1 / -1; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; }
-        .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
-        .extra-btn { background: white; border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .extra-val { font-size: 0.95rem; font-weight: 700; min-width: 14px; text-align: center; }
-
-        .grand-footer { text-align: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border-color); }
-        .grand-total-text { font-size: 1.1rem; font-weight: 800; }
-        .sunday-theme .grand-total-text { color: var(--sunday-color); }
-        .ot-theme .grand-total-text { color: var(--ot-color); }
-
-        .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .food-row { display: flex; justify-content: space-between; align-items: center; }
-
-        /* Filtered List Layout */
-        .filtered-horizontal-grid { 
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px; 
-            max-height: 400px; 
-            overflow-y: auto; 
-        }
-
-        @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        .capture-mode-active {
-            max-height: none !important;
-            overflow-y: visible !important;
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-        }
-
-        .filtered-dept-group { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
-        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: #e2e8f0; }
-        .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); }
-        .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); }
-
-        .filtered-vertical-list { padding: 0; margin: 0; list-style: none; }
-        .filtered-emp-row { font-size: 0.85rem; padding: 5px 2px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .filtered-emp-row:last-child { border-bottom: none; }
-
-        /* Status Badges */
-        .food-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-        .badge-yes { background-color: var(--ot-bg); color: var(--ot-color); border: 1px solid var(--ot-color); }
-        .badge-nasto { background-color: var(--ot-bg); color: var(--ot-color); }
-        .badge-faral { background-color: var(--faral-bg); color: var(--faral-color); }
-        .badge-no { background-color: var(--sunday-bg); color: var(--sunday-color); border: 1px solid var(--sunday-color); opacity: 0.75; }
-
-        .download-action-container { text-align: center; margin: 15px 0 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .main-download-btn { width: 100%; max-width: 320px; box-sizing: border-box; justify-content: center; font-size: 1.05rem; padding: 12px; border: none; border-radius: 25px; cursor: pointer; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
-        .sunday-theme .main-download-btn { background-color: var(--sunday-color); }
-        .ot-theme .main-download-btn { background-color: var(--ot-color); }
-
-        /* Workspaces Grid */
-        .departments-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-
-        @media (min-width: 600px) { .departments-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 900px) { .departments-grid { grid-template-columns: repeat(3, 1fr); } }
-
-        .dept-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); }
-        .dept-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        
-        .title-container { display: flex; align-items: center; gap: 4px; }
-        .dept-title { font-size: 1rem; color: var(--primary-color); margin: 0; font-weight: 700; }
-        
-        .delete-dept-btn { background: transparent; border: none; color: var(--sunday-color); font-size: 1.1rem; cursor: pointer; display: none; }
-
-        .add-emp-form { display: flex; gap: 4px; margin-bottom: 12px; }
-        .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; }
-        .add-emp-form button { background-color: #f1f5f9; border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
-
-        .emp-list { list-style: none; padding: 0; margin: 0; }
-        .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid #f1f5f9; }
-        .emp-item:last-child { border-bottom: none; }
-        
-        .name-container { display: flex; align-items: center; gap: 4px; }
-        .emp-name { font-weight: 500; font-size: 0.9rem; }
-
-        .btn-group { display: flex; gap: 4px; }
-        .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: #fff; cursor: pointer; }
-        
-        .sunday-theme .btn-present { background-color: var(--sunday-bg); color: var(--sunday-color); border-color: var(--sunday-color); }
-        .sunday-theme .btn-absent { background-color: #f1f5f9; color: var(--text-light); }
-        
-        .ot-theme .btn-nasto-active { background-color: var(--ot-bg); color: var(--ot-color); border-color: var(--ot-color); }
-        .ot-theme .btn-faral-active { background-color: var(--faral-bg); color: var(--faral-color); border-color: var(--faral-color); }
-        .ot-theme .btn-inactive { background-color: #f1f5f9; color: var(--text-light); }
-
-        .delete-btn { background: none; border: none; color: var(--sunday-color); font-size: 1.1rem; padding: 2px 4px; cursor: pointer; display: none; }
-        .no-active-msg, .no-dept-msg { color: var(--text-light); font-size: 0.85rem; font-style: italic; text-align: center; width: 100%; padding: 15px 0; grid-column: 1/-1; }
-    </style>
+            font-size: 0.85rem; white-space: nowrap; } /* Capture Box Area */ .download-capture-area { background: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } .download-header { text-align: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 10px; margin-bottom: 15px; } .download-header h2 { margin: 0; color: var(--primary-color); font-size: 1.5rem; } .download-header p { margin: 4px 0 0 0; font-weight: 700; color: var(--text-light); font-size: 0.95rem; } .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } } .panel-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } .panel-title { margin: 0 0 14px 0; font-size: 1.05rem; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; } .report-grid { display: grid; grid-template-columns: 1fr; gap: 8px; } @media (min-width: 480px) { .report-grid { grid-template-columns: repeat(2, 1fr); } } .report-item { padding: 10px 14px; background: var(--bg-color); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; } .report-item span { font-weight: 700; color: var(--primary-color); } .extra-container { grid-column: 1 / -1; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; } .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; } .extra-btn { background: white; border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; } .extra-val { font-size: 0.95rem; font-weight: 700; min-width: 14px; text-align: center; } .grand-footer { text-align: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border-color); } .grand-total-text { font-size: 1.1rem; font-weight: 800; } .sunday-theme .grand-total-text { color: var(--sunday-color); } .ot-theme .grand-total-text { color: var(--ot-color); } .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); } .food-row { display: flex; justify-content: space-between; align-items: center; } /* Filtered List Layout */ .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } .capture-mode-active { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } .filtered-dept-group { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: #e2e8f0; } .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); } .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); } .filtered-vertical-list { padding: 0; margin: 0; list-style: none; } .filtered-emp-row { font-size: 0.85rem; padding: 5px 2px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; } .filtered-emp-row:last-child { border-bottom: none; } /* Status Badges */ .food-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; } .badge-yes { background-color: var(--ot-bg); color: var(--ot-color); border: 1px solid var(--ot-color); } .badge-nasto { background-color: var(--ot-bg); color: var(--ot-color); } .badge-faral { background-color: var(--faral-bg); color: var(--faral-color); } /* નવો બ્લુ બેજ ફક્ત ખાલી ઓવરટાઇમ હાજરી માટે */ .badge-only-ot { background-color: var(--blue-bg); color: var(--blue-color); border: 1px solid var(--blue-color); } .badge-no { background-color: var(--sunday-bg); color: var(--sunday-color); border: 1px solid var(--sunday-color); opacity: 0.75; } .download-action-container { text-align: center; margin: 15px 0 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; } .main-download-btn { width: 100%; max-width: 320px; box-sizing: border-box; justify-content: center; font-size: 1.05rem; padding: 12px; border: none; border-radius: 25px; cursor: pointer; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; } .sunday-theme .main-download-btn { background-color: var(--sunday-color); } .ot-theme .main-download-btn { background-color: var(--ot-color); } /* Workspaces Grid */ .departments-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } @media (min-width: 600px) { .departments-grid { grid-template-columns: repeat(2, 1fr); } } @media (min-width: 900px) { .departments-grid { grid-template-columns: repeat(3, 1fr); } } .dept-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } .dept-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; } .title-container { display: flex; align-items: center; gap: 4px; } .dept-title { font-size: 1rem; color: var(--primary-color); margin: 0; font-weight: 700; } .delete-dept-btn { background: transparent; border: none; color: var(--sunday-color); font-size: 1.1rem; cursor: pointer; display: none; } .add-emp-form { display: flex; gap: 4px; margin-bottom: 12px; } .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; } .add-emp-form button { background-color: #f1f5f9; border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; } .emp-list { list-style: none; padding: 0; margin: 0; } .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid #f1f5f9; } .emp-item:last-child { border-bottom: none; } .name-container { display: flex; align-items: center; gap: 4px; } .emp-name { font-weight: 500; font-size: 0.9rem; } .btn-group { display: flex; gap: 4px; } .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: #fff; cursor: pointer; } .sunday-theme .btn-present { background-color: var(--sunday-bg); color: var(--sunday-color); border-color: var(--sunday-color); } .sunday-theme .btn-absent { background-color: #f1f5f9; color: var(--text-light); } .ot-theme .btn-nasto-active { background-color: var(--ot-bg); color: var(--ot-color); border-color: var(--ot-color); } .ot-theme .btn-faral-active { background-color: var(--faral-bg); color: var(--faral-color); border-color: var(--faral-color); } /* ઓવરટાઇમનું નવું બ્લુ ઓન્લી બટન */ .ot-theme .btn-only-ot-active { background-color: var(--blue-bg); color: var(--blue-color); border-color: var(--blue-color); } .ot-theme .btn-inactive { background-color: #f1f5f9; color: var(--text-light); } .delete-btn { background: none; border: none; color: var(--sunday-color); font-size: 1.1rem; padding: 2px 4px; cursor: pointer; display: none; } .no-active-msg, .no-dept-msg { color: var(--text-light); font-size: 0.85rem; font-style: italic; text-align: center; width: 100%; padding: 15px 0; grid-column: 1/-1; } </style>
 </head>
 <body class="sunday-theme">
 
@@ -559,31 +425,25 @@
         localStorage.setItem('officeDateWiseShiftTime', JSON.stringify(shiftTimeRecords));
     }
 
-    // બધી જ ટીક અને ટાઇમ સાફ કરવાનું પરમિશન વાળું ફીચર
     function eraseAllAttendance() {
         if (confirm(labels[currentLang].eraseConfirm)) {
-            // આ તારીખના કર્મચારીઓના રેકોર્ડ્સ ક્લિયર કરવા
             Object.keys(attendanceRecords).forEach(key => {
                 if (key.startsWith(selectedDate + "_")) {
                     delete attendanceRecords[key];
                 }
             });
-            // આ તારીખના એક્સ્ટ્રા ફૂડ અને શિફ્ટ ટાઇમ રેકોર્ડ્સ સાફ કરવા
             if (extraFoodRecords[selectedDate]) delete extraFoodRecords[selectedDate];
             if (shiftTimeRecords[selectedDate]) delete shiftTimeRecords[selectedDate];
             
-            // લોકલ સ્ટોરેજ અપડેટ કરવું
             localStorage.setItem('officeDateWiseRecords', JSON.stringify(attendanceRecords));
             localStorage.setItem('officeDateWiseExtraFood', JSON.stringify(extraFoodRecords));
             localStorage.setItem('officeDateWiseShiftTime', JSON.stringify(shiftTimeRecords));
             
-            // ઇનપુટ બોક્સ ખાલી કરવું અને રીરેન્ડર કરવું
             document.getElementById('shift-time-input').value = '';
             renderAll();
         }
     }
 
-    // Security Unlock Permission Toggle
     function toggleSecurityLock() {
         isUnlocked = !isUnlocked;
         const lockBtn = document.getElementById('main-lock-btn');
@@ -725,10 +585,30 @@
 
     function toggleStatus(deptName, empName, field) {
         let key = `${selectedDate}_${deptName}_${empName}`;
-        if (!attendanceRecords[key]) attendanceRecords[key] = { sunday: false, nasto: false, faral: false };
-        if (field === 'sunday') { attendanceRecords[key].sunday = !attendanceRecords[key].sunday; }
-        else if (field === 'nasto') { attendanceRecords[key].nasto = !attendanceRecords[key].nasto; if (attendanceRecords[key].nasto) attendanceRecords[key].faral = false; }
-        else if (field === 'faral') { attendanceRecords[key].faral = !attendanceRecords[key].faral; if (attendanceRecords[key].faral) attendanceRecords[key].nasto = false; }
+        if (!attendanceRecords[key]) attendanceRecords[key] = { sunday: false, nasto: false, faral: false, onlyOt: false };
+        
+        if (field === 'sunday') { 
+            attendanceRecords[key].sunday = !attendanceRecords[key].sunday; 
+        } else if (field === 'nasto') { 
+            attendanceRecords[key].nasto = !attendanceRecords[key].nasto; 
+            if (attendanceRecords[key].nasto) {
+                attendanceRecords[key].faral = false;
+                attendanceRecords[key].onlyOt = false;
+            }
+        } else if (field === 'faral') { 
+            attendanceRecords[key].faral = !attendanceRecords[key].faral; 
+            if (attendanceRecords[key].faral) {
+                attendanceRecords[key].nasto = false;
+                attendanceRecords[key].onlyOt = false;
+            }
+        } else if (field === 'onlyOt') {
+            // નવું ફીચર: ખાલી ઓવરટાઇમ હાજરી માટે (ખોરાક વગર)
+            attendanceRecords[key].onlyOt = !attendanceRecords[key].onlyOt;
+            if (attendanceRecords[key].onlyOt) {
+                attendanceRecords[key].nasto = false;
+                attendanceRecords[key].faral = false;
+            }
+        }
         localStorage.setItem('officeDateWiseRecords', JSON.stringify(attendanceRecords));
         renderAll();
     }
@@ -796,8 +676,12 @@
 
         deptKeys.forEach((deptName, deptIndex) => {
             let deptPresentCount = 0;
-            let presentStaffList = []; 
-            let absentStaffList = [];  
+            
+            // અલગ-અલગ સોર્ટિંગ લિસ્ટ કલેક્શન (મિક્સ ન થવા દેવા માટે)
+            let listNasto = [];
+            let listFaral = [];
+            let listOnlyOt = [];
+            let listAbsent = [];
             
             const inputId = `input-dept-${deptIndex}`;
             const deptCard = document.createElement('div');
@@ -828,36 +712,54 @@
                 let isSun = getStatus(deptName, empName, 'sunday');
                 let isNasto = getStatus(deptName, empName, 'nasto');
                 let isFaral = getStatus(deptName, empName, 'faral');
+                let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
 
                 if (currentMode === 'sunday') {
                     isPresent = isSun;
                     if (isPresent) { 
                         deptPresentCount++; grandTotal++; 
                         statusBadgeHTML = `<span class="food-badge badge-yes">Yes</span>`; 
-                        presentStaffList.push({ name: empName, statusBadge: statusBadgeHTML });
+                        listNasto.push({ name: empName, statusBadge: statusBadgeHTML }); // સન્ડે માટે એક લિસ્ટમાં ઉમેરવું
                     } else {
                         statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
-                        absentStaffList.push({ name: empName, statusBadge: statusBadgeHTML });
+                        listAbsent.push({ name: empName, statusBadge: statusBadgeHTML });
                     }
                     let statusText = isPresent ? "Yes" : "No";
                     let buttonClass = isPresent ? "btn-present" : "btn-absent";
                     innerActionHTML = `<button class="status-toggle-btn ${buttonClass}" onclick="toggleStatus('${deptName}', '${empName}', 'sunday')">${statusText}</button>`;
                 } else {
-                    if (isNasto || isFaral) {
+                    // ઓવરટાઇમ કન્ડિશન્સ
+                    if (isNasto || isFaral || isOnlyOt) {
                         deptPresentCount++; grandTotal++;
-                        if (isNasto) { totalNasto++; statusBadgeHTML = `<span class="food-badge badge-nasto">${l.nBadge}</span>`; }
-                        if (isFaral) { totalFaral++; statusBadgeHTML = `<span class="food-badge badge-faral">${l.fBadge}</span>`; }
-                        presentStaffList.push({ name: empName, statusBadge: statusBadgeHTML });
+                        if (isNasto) { 
+                            totalNasto++; 
+                            statusBadgeHTML = `<span class="food-badge badge-nasto">${l.nBadge}</span>`; 
+                            listNasto.push({ name: empName, statusBadge: statusBadgeHTML });
+                        }
+                        if (isFaral) { 
+                            totalFaral++; 
+                            statusBadgeHTML = `<span class="food-badge badge-faral">${l.fBadge}</span>`; 
+                            listFaral.push({ name: empName, statusBadge: statusBadgeHTML });
+                        }
+                        if (isOnlyOt) {
+                            // ખાલી બેસવા વાળા મેમ્બર (બ્લુ બેજ)
+                            statusBadgeHTML = `<span class="food-badge badge-only-ot">Yes</span>`;
+                            listOnlyOt.push({ name: empName, statusBadge: statusBadgeHTML });
+                        }
                     } else {
                         statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
-                        absentStaffList.push({ name: empName, statusBadge: statusBadgeHTML });
+                        listAbsent.push({ name: empName, statusBadge: statusBadgeHTML });
                     }
+                    
                     let nastoClass = isNasto ? "btn-nasto-active" : "btn-inactive";
                     let faralClass = isFaral ? "btn-faral-active" : "btn-inactive";
+                    let onlyOtClass = isOnlyOt ? "btn-only-ot-active" : "btn-inactive";
+                    
                     innerActionHTML = `
                         <div class="btn-group">
                             <button class="status-toggle-btn ${nastoClass}" onclick="toggleStatus('${deptName}', '${empName}', 'nasto')">N</button>
                             <button class="status-toggle-btn ${faralClass}" onclick="toggleStatus('${deptName}', '${empName}', 'faral')">F</button>
+                            <button class="status-toggle-btn ${onlyOtClass}" onclick="toggleStatus('${deptName}', '${empName}', 'onlyOt')">No</button>
                         </div>
                     `;
                 }
@@ -885,7 +787,8 @@
             reportItem.innerHTML = `<div>${deptName}</div> <span>${deptPresentCount}</span>`;
             reportGridBox.appendChild(reportItem);
 
-            let sortedStaffList = presentStaffList.concat(absentStaffList);
+            // ઓવરટાઇમ રિપોર્ટ સોર્ટિંગ ફિલ્ટર: નાસ્તો -> ફરાળ -> ખાલી બેસવા વાળા -> ગેરહાજર (મિક્સ ના થાય તે માટે)
+            let sortedStaffList = listNasto.concat(listFaral, listOnlyOt, listAbsent);
 
             if (sortedStaffList.length > 0) {
                 anyEmployeeGlobal = true;
