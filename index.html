@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર</title>
-    <!-- ફોટો ડાઉનલોડ કરવા માટેની લાઈબ્રેરી -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -85,7 +84,7 @@
             .lang-switcher-wrapper { position: absolute; top: 0; right: 0; margin-top: 0; }
         }
 
-        .lang-btn, .lock-btn, .erase-btn {
+        .lang-btn, .lock-btn, .erase-btn, .backup-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             padding: 6px 14px;
@@ -108,6 +107,18 @@
         }
         .erase-btn:hover {
             background-color: #ffedd5;
+        }
+        
+        /* બેકઅપ બટન માટેના સ્પેશિયલ ક્લાસ */
+        .backup-btn.export-btn {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border-color: #bbf7d0;
+        }
+        .backup-btn.import-btn {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
         }
 
         .controls-row {
@@ -276,7 +287,6 @@
                     <button id="btn-sunday" class="mode-btn active-sunday" onclick="switchMode('sunday')">☀️ Sunday</button>
                     <button id="btn-ot" class="mode-btn" onclick="switchMode('ot')">⏱️ Overtime</button>
                 </div>
-                <!-- Shift Time ફીચર ઇનપુટ બોક્સ -->
                 <div id="shift-time-box" class="shift-time-wrapper">
                     <label id="label-shift-time">⏰ Shift Time:</label>
                     <input type="text" id="shift-time-input" placeholder="09:00 AM To 05:00 PM" onchange="onShiftTimeChange()">
@@ -289,7 +299,6 @@
         </div>
     </div>
 
-    <!-- Capture Box Zone -->
     <div class="download-capture-area" id="capture-zone">
         <div class="download-header" id="snap-header" style="display: none;">
             <h2 id="snap-title">ઓફિસ હાજરી રીપોર્ટ</h2>
@@ -325,16 +334,19 @@
         </div>
     </div>
 
-    <!-- Download, Security Lock & Erase Buttons -->
     <div class="download-action-container">
         <button id="main-lock-btn" class="lock-btn" onclick="toggleSecurityLock()">🔒 Lock (Safe Mode)</button>
         <button id="main-erase-btn" class="erase-btn" onclick="eraseAllAttendance()">🧹 Erase All</button>
+        
+        <button id="main-export-btn" class="backup-btn export-btn" onclick="exportBackupData()">📥 Export Backup</button>
+        <button id="main-import-btn" class="backup-btn import-btn" onclick="triggerImportClick()">📤 Import Backup</button>
+        <input type="file" id="hidden-file-input" accept=".txt" style="display: none;" onchange="importBackupData(event)">
+        
         <button class="main-download-btn" onclick="downloadReportImage()">
             📸 <span id="label-download-btn">ડાઉનલોડ રીપોર્ટ (Image)</span>
         </button>
     </div>
 
-    <!-- Master Departments Workspace Grid -->
     <div class="departments-grid" id="main-departments-grid"></div>
 </div>
 
@@ -401,6 +413,78 @@
         selectedDate = yyyy + '-' + mm + '-' + dd;
         document.getElementById('attendance-date').value = selectedDate;
     }
+
+    // --- .txt બેકઅપ ફંક્શન્સ શરૂઆત ---
+    function exportBackupData() {
+        const backupObject = {
+            officeCustomTitle: localStorage.getItem('officeCustomTitle'),
+            officeMasterStructure: localStorage.getItem('officeMasterStructure'),
+            officeDateWiseRecords: localStorage.getItem('officeDateWiseRecords'),
+            officeDateWiseExtraFood: localStorage.getItem('officeDateWiseExtraFood'),
+            officeDateWiseShiftTime: localStorage.getItem('officeDateWiseShiftTime')
+        };
+        
+        // ડેટાને ટેક્સ્ટ ફોર્મેટમાં કન્વર્ટ કરવો
+        const jsonString = JSON.stringify(backupObject);
+        const blob = new Blob([jsonString], { type: "text/plain;charset=utf-8" });
+        
+        const downloadAnchor = document.createElement('a');
+        const today = new Date().toISOString().slice(0, 10);
+        
+        downloadAnchor.href = URL.createObjectURL(blob);
+        downloadAnchor.setAttribute("download", `attendance_backup_${today}.txt`); // ફાઈલ હવે .txt તરીકે સેવ થશે
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function triggerImportClick() {
+        document.getElementById('hidden-file-input').click();
+    }
+
+    function importBackupData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsedData = JSON.parse(e.target.result);
+                
+                if (!parsedData.officeMasterStructure && !parsedData.officeDateWiseRecords) {
+                    alert(currentLang === 'gu' ? "ભૂલ: આ માન્ય બેકઅપ ફાઇલ નથી!" : "Error: Invalid backup file!");
+                    return;
+                }
+
+                let confirmMsg = currentLang === 'gu' 
+                    ? "શું તમે આ બેકઅપ ડેટા ઇમ્પોર્ટ કરવા માંગો છો? આનાથી જૂનો ડેટા બદલાઈ જશે." 
+                    : "Do you want to import this backup? It will overwrite current data.";
+
+                if (confirm(confirmMsg)) {
+                    if (parsedData.officeCustomTitle) localStorage.setItem('officeCustomTitle', parsedData.officeCustomTitle);
+                    if (parsedData.officeMasterStructure) localStorage.setItem('officeMasterStructure', parsedData.officeMasterStructure);
+                    if (parsedData.officeDateWiseRecords) localStorage.setItem('officeDateWiseRecords', parsedData.officeDateWiseRecords);
+                    if (parsedData.officeDateWiseExtraFood) localStorage.setItem('officeDateWiseExtraFood', parsedData.officeDateWiseExtraFood);
+                    if (parsedData.officeDateWiseShiftTime) localStorage.setItem('officeDateWiseShiftTime', parsedData.officeDateWiseShiftTime);
+
+                    officeNames = JSON.parse(localStorage.getItem('officeCustomTitle')) || officeNames;
+                    masterData = JSON.parse(localStorage.getItem('officeMasterStructure')) || masterData;
+                    attendanceRecords = JSON.parse(localStorage.getItem('officeDateWiseRecords')) || attendanceRecords;
+                    extraFoodRecords = JSON.parse(localStorage.getItem('officeDateWiseExtraFood')) || extraFoodRecords;
+                    shiftTimeRecords = JSON.parse(localStorage.getItem('officeDateWiseShiftTime')) || shiftTimeRecords;
+
+                    document.getElementById('main-title').innerText = officeNames[currentLang];
+                    onDateChange();
+                    alert(currentLang === 'gu' ? "બેકઅપ સફળતાપૂર્વક ઇમ્પોર્ટ થઈ ગયો છે!" : "Backup imported successfully!");
+                }
+            } catch (err) {
+                alert(currentLang === 'gu' ? "ફાઇલ વાંચવામાં ભૂલ આવી છે! કૃપા કરીને સાચી .txt બેકઅપ ફાઇલ સિલેક્ટ કરો." : "Error reading file! Please select a valid .txt backup file.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; 
+    }
+    // --- .txt બેકઅપ ફંક્શન્સ સમાપ્તિ ---
 
     function getFormattedDateAndDay(inputDateStr) {
         if (!inputDateStr) return { formattedDate: '--', dayName: '--' };
@@ -602,7 +686,6 @@
                 attendanceRecords[key].onlyOt = false;
             }
         } else if (field === 'onlyOt') {
-            // નવું ફીચર: ખાલી ઓવરટાઇમ હાજરી માટે (ખોરાક વગર)
             attendanceRecords[key].onlyOt = !attendanceRecords[key].onlyOt;
             if (attendanceRecords[key].onlyOt) {
                 attendanceRecords[key].nasto = false;
@@ -677,7 +760,6 @@
         deptKeys.forEach((deptName, deptIndex) => {
             let deptPresentCount = 0;
             
-            // અલગ-અલગ સોર્ટિંગ લિસ્ટ કલેક્શન (મિક્સ ન થવા દેવા માટે)
             let listNasto = [];
             let listFaral = [];
             let listOnlyOt = [];
@@ -719,7 +801,7 @@
                     if (isPresent) { 
                         deptPresentCount++; grandTotal++; 
                         statusBadgeHTML = `<span class="food-badge badge-yes">Yes</span>`; 
-                        listNasto.push({ name: empName, statusBadge: statusBadgeHTML }); // સન્ડે માટે એક લિસ્ટમાં ઉમેરવું
+                        listNasto.push({ name: empName, statusBadge: statusBadgeHTML });
                     } else {
                         statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
                         listAbsent.push({ name: empName, statusBadge: statusBadgeHTML });
@@ -728,7 +810,6 @@
                     let buttonClass = isPresent ? "btn-present" : "btn-absent";
                     innerActionHTML = `<button class="status-toggle-btn ${buttonClass}" onclick="toggleStatus('${deptName}', '${empName}', 'sunday')">${statusText}</button>`;
                 } else {
-                    // ઓવરટાઇમ કન્ડિશન્સ
                     if (isNasto || isFaral || isOnlyOt) {
                         deptPresentCount++; grandTotal++;
                         if (isNasto) { 
@@ -742,7 +823,6 @@
                             listFaral.push({ name: empName, statusBadge: statusBadgeHTML });
                         }
                         if (isOnlyOt) {
-                            // ખાલી બેસવા વાળા મેમ્બર (બ્લુ બેજ)
                             statusBadgeHTML = `<span class="food-badge badge-only-ot">Yes</span>`;
                             listOnlyOt.push({ name: empName, statusBadge: statusBadgeHTML });
                         }
@@ -787,7 +867,6 @@
             reportItem.innerHTML = `<div>${deptName}</div> <span>${deptPresentCount}</span>`;
             reportGridBox.appendChild(reportItem);
 
-            // ઓવરટાઇમ રિપોર્ટ સોર્ટિંગ ફિલ્ટર: નાસ્તો -> ફરાળ -> ખાલી બેસવા વાળા -> ગેરહાજર (મિક્સ ના થાય તે માટે)
             let sortedStaffList = listNasto.concat(listFaral, listOnlyOt, listAbsent);
 
             if (sortedStaffList.length > 0) {
