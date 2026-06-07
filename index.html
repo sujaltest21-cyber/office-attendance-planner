@@ -65,7 +65,7 @@
             opacity: 0.5;
             padding: 2px 6px;
             transition: opacity 0.2s;
-            display: none; /* લોક મોડ આધારિત રાખવા માટે */
+            display: none;
         }
         .edit-title-btn:hover, .edit-btn:hover { opacity: 1; }
 
@@ -285,12 +285,8 @@
         .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } 
         @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } 
         .capture-mode-active { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
-        
-        /* ડાઉનલોડ કરતી વખતે 'No' વાળા કર્મચારીઓને હાઈડ કરવા માટેનો ખાસ ક્લાસ */
-        .capture-mode-active .filtered-emp-row.hide-in-snap { display: none !important; }
 
         .filtered-dept-group { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
-        .filtered-dept-group.hide-in-snap { display: none !important; }
         .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: #e2e8f0; } 
         .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); } 
         .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); } 
@@ -481,7 +477,6 @@
     };
 
     function initDate() {
-        // છેલ્લે સિલેક્ટ કરેલી તારીખ સેવ રાખવા માટે
         let savedDate = localStorage.getItem('officeSelectedDate');
         if (savedDate) {
             selectedDate = savedDate;
@@ -575,7 +570,7 @@
 
     function onDateChange() {
         selectedDate = document.getElementById('attendance-date').value;
-        localStorage.setItem('officeSelectedDate', selectedDate); // તારીખ સેવ કરી
+        localStorage.setItem('officeSelectedDate', selectedDate);
         document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
         renderAll();
     }
@@ -955,19 +950,16 @@
             let sortedStaffList = listPresent.concat(listAbsent);
 
             if (sortedStaffList.length > 0) {
-                // જો આ વિભાગમાં કોઈ જ હાજર ન હોય તો ઈમેજ સ્નેપમાં આખો વિભાગ છુપાવવા માટે ક્લાસ ઉમેરવો
-                let hideDeptGroupClass = (deptPresentCount === 0) ? 'hide-in-snap' : '';
                 anyEmployeeGlobal = true;
                 
                 const deptGroupDiv = document.createElement('div');
-                deptGroupDiv.className = `filtered-dept-group ${hideDeptGroupClass}`;
+                deptGroupDiv.className = `filtered-dept-group`;
                 let groupHTML = `<div class="filtered-dept-header">${deptName}</div><ul class="filtered-vertical-list">`;
                 
                 let pIndex = 1;
                 sortedStaffList.forEach((emp) => {
-                    let hideEmpClass = emp.isAbsent ? 'hide-in-snap' : '';
                     let displayIndex = emp.isAbsent ? '' : `${pIndex++}. `;
-                    groupHTML += `<li class="filtered-emp-row ${hideEmpClass}"><div>${displayIndex}${emp.name}</div>${emp.statusBadge}</li>`;
+                    groupHTML += `<li class="filtered-emp-row"><div>${displayIndex}${emp.name}</div>${emp.statusBadge}</li>`;
                 });
                 groupHTML += `</ul>`;
                 deptGroupDiv.innerHTML = groupHTML;
