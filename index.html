@@ -21,6 +21,24 @@
             --border-color: #e2e8f0;
             --blue-color: #3b82f6;
             --blue-bg: #dbeafe;
+            --panel-muted: #f8fafc;
+            --dept-header-bg: #e2e8f0;
+        }
+
+        /* Dark Mode Theme Variables */
+        body.dark-theme {
+            --primary-color: #f8fafc;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #cbd5e1;
+            --text-light: #94a3b8;
+            --border-color: #334155;
+            --panel-muted: #1e293b;
+            --dept-header-bg: #334155;
+            --sunday-bg: #451a1a;
+            --ot-bg: #064e3b;
+            --faral-bg: #451a03;
+            --blue-bg: #172554;
         }
 
         body {
@@ -30,6 +48,7 @@
             padding: 16px;
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
@@ -75,16 +94,19 @@
             font-size: 0.95rem;
         }
 
-        .lang-switcher-wrapper {
+        .theme-switcher-wrapper {
             margin-top: 10px;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
         }
 
         @media (min-width: 768px) {
-            .lang-switcher-wrapper { position: absolute; top: 0; right: 0; margin-top: 0; }
+            .theme-switcher-wrapper { position: absolute; top: 0; right: 0; margin-top: 0; }
         }
 
-        .lang-btn, .lock-btn, .erase-btn, .backup-btn {
+        .lang-btn, .theme-btn, .lock-btn, .erase-btn, .backup-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             padding: 6px 14px;
@@ -94,31 +116,32 @@
             font-size: 0.85rem;
             color: var(--primary-color);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
         }
+        
         .lock-btn.unlocked {
             background-color: #fef2f2;
             color: var(--sunday-color);
             border-color: var(--sunday-color);
         }
+        body.dark-theme .lock-btn.unlocked {
+            background-color: #451a1a;
+        }
+        
         .erase-btn {
             background-color: #fff7ed;
             color: #ea580c;
             border-color: #fdba74;
         }
-        .erase-btn:hover {
-            background-color: #ffedd5;
-        }
+        .erase-btn:hover { background-color: #ffedd5; }
+        body.dark-theme .erase-btn { background-color: #431407; color: #ff9770; border-color: #9a3412; }
+        body.dark-theme .erase-btn:hover { background-color: #7c2d12; }
         
-        .backup-btn.export-btn {
-            background-color: #f0fdf4;
-            color: #16a34a;
-            border-color: #bbf7d0;
-        }
-        .backup-btn.import-btn {
-            background-color: #eff6ff;
-            color: #2563eb;
-            border-color: #bfdbfe;
-        }
+        .backup-btn.export-btn { background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        body.dark-theme .backup-btn.export-btn { background-color: #064e3b; color: #4ade80; border-color: #14532d; }
+        
+        .backup-btn.import-btn { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        body.dark-theme .backup-btn.import-btn { background-color: #172554; color: #60a5fa; border-color: #1e3a8a; }
 
         .controls-row {
             display: flex;
@@ -168,6 +191,7 @@
             font-weight: 600;
             outline: none;
             color: var(--text-main);
+            background: var(--card-bg);
         }
 
         .mode-switcher-container {
@@ -179,10 +203,11 @@
 
         .mode-switcher {
             display: flex;
-            background: #e2e8f0;
+            background: var(--bg-color);
             padding: 4px;
             border-radius: 9999px;
             width: 100%;
+            border: 1px solid var(--border-color);
         }
 
         @media (min-width: 768px) { .mode-switcher { width: 250px; } }
@@ -200,8 +225,8 @@
             color: var(--text-light);
         }
 
-        .mode-btn.active-sunday { background-color: var(--card-bg); color: var(--sunday-color); }
-        .mode-btn.active-ot { background-color: var(--card-bg); color: var(--ot-color); }
+        .mode-btn.active-sunday { background-color: var(--card-bg); color: var(--sunday-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .mode-btn.active-ot { background-color: var(--card-bg); color: var(--ot-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .shift-time-wrapper {
             display: flex;
@@ -225,6 +250,7 @@
             font-weight: 600;
             outline: none;
             color: var(--text-main);
+            background: var(--card-bg);
             width: 140px;
         }
 
@@ -252,15 +278,17 @@
 
         .add-dept-form button {
             background-color: var(--primary-color);
-            color: white;
+            color: var(--bg-color);
             border: none;
             padding: 8px 16px;
             border-radius: 9999px;
             font-weight: 600;
             font-size: 0.85rem; white-space: nowrap; 
+            cursor: pointer;
         } 
+        body.dark-theme .add-dept-form button { color: #0f172a; background-color: #f8fafc; }
         
-        .download-capture-area { background: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
+        .download-capture-area { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
         .download-header { text-align: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 10px; margin-bottom: 15px; } 
         .download-header h2 { margin: 0; color: var(--primary-color); font-size: 1.5rem; } 
         .download-header p { margin: 4px 0 0 0; font-weight: 700; color: var(--text-light); font-size: 0.95rem; } 
@@ -270,36 +298,41 @@
         .panel-title { margin: 0 0 14px 0; font-size: 1.05rem; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; } 
         .report-grid { display: grid; grid-template-columns: 1fr; gap: 8px; } 
         @media (min-width: 480px) { .report-grid { grid-template-columns: repeat(2, 1fr); } } 
-        .report-item { padding: 10px 14px; background: var(--bg-color); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; } 
+        .report-item { padding: 10px 14px; background: var(--panel-muted); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; border: 1px solid var(--border-color); } 
         .report-item span { font-weight: 700; color: var(--primary-color); } 
-        .extra-container { grid-column: 1 / -1; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; } 
+        .extra-container { grid-column: 1 / -1; background: var(--panel-muted); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; } 
         .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; } 
-        .extra-btn { background: white; border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; } 
+        .extra-btn { background: var(--card-bg); border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; } 
         .extra-val { font-size: 0.95rem; font-weight: 700; min-width: 14px; text-align: center; } 
         .grand-footer { text-align: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border-color); } 
         .sunday-theme .grand-total-text { color: var(--sunday-color); font-size: 1.1rem; font-weight: 800; } 
         .ot-theme .grand-total-text { color: var(--ot-color); font-size: 1.1rem; font-weight: 800; } 
-        .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); } 
+        .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: var(--panel-muted); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); } 
         .food-row { display: flex; justify-content: space-between; align-items: center; } 
         
         .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } 
         @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } 
         .capture-mode-active { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
 
-        .filtered-dept-group { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
-        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: #e2e8f0; } 
+        .filtered-dept-group { background: var(--panel-muted); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
+        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: var(--dept-header-bg); } 
         .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); } 
         .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); } 
         .filtered-vertical-list { padding: 0; margin: 0; list-style: none; } 
-        .filtered-emp-row { font-size: 0.85rem; padding: 5px 2px; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; } 
+        .filtered-emp-row { font-size: 0.85rem; padding: 5px 2px; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; } 
         .filtered-emp-row:last-child { border-bottom: none; } 
         
         .food-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; } 
-        .badge-yes { background-color: var(--ot-bg); color: var(--ot-color); border: 1px solid var(--ot-color); } 
-        .badge-nasto { background-color: var(--ot-bg); color: var(--ot-color); } 
-        .badge-faral { background-color: var(--faral-bg); color: var(--faral-color); } 
+        .badge-yes { background-color: #d1fae5; color: #10b981; border: 1px solid #10b981; } 
+        body.dark-theme .badge-yes { background-color: #064e3b; color: #34d399; }
+        .badge-nasto { background-color: #d1fae5; color: #10b981; } 
+        body.dark-theme .badge-nasto { background-color: #064e3b; color: #34d399; }
+        .badge-faral { background-color: #fef3c7; color: #f59e0b; } 
+        body.dark-theme .badge-faral { background-color: #451a03; color: #fbbf24; }
         .badge-only-ot { background-color: var(--blue-bg); color: var(--blue-color); border: 1px solid var(--blue-color); } 
-        .badge-no { background-color: var(--sunday-bg); color: var(--sunday-color); border: 1px solid var(--sunday-color); opacity: 0.75; } 
+        body.dark-theme .badge-only-ot { color: #60a5fa; }
+        .badge-no { background-color: #fee2e2; color: #ef4444; border: 1px solid #ef4444; opacity: 0.75; } 
+        body.dark-theme .badge-no { background-color: #451a1a; color: #f87171; }
         
         .download-action-container { text-align: center; margin: 15px 0 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; } 
         .main-download-btn { width: 100%; max-width: 320px; box-sizing: border-box; justify-content: center; font-size: 1.05rem; padding: 12px; border: none; border-radius: 25px; cursor: pointer; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; } 
@@ -315,21 +348,24 @@
         .dept-title { font-size: 1rem; color: var(--primary-color); margin: 0; font-weight: 700; } 
         .delete-dept-btn { background: transparent; border: none; color: var(--sunday-color); font-size: 1.1rem; cursor: pointer; display: none; } 
         .add-emp-form { display: flex; gap: 4px; margin-bottom: 12px; } 
-        .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; } 
-        .add-emp-form button { background-color: #f1f5f9; border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; } 
+        .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: var(--bg-color); color: var(--text-main); } 
+        .add-emp-form button { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; } 
         .emp-list { list-style: none; padding: 0; margin: 0; } 
-        .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid #f1f5f9; } 
+        .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--border-color); } 
         .emp-item:last-child { border-bottom: none; } 
         .name-container { display: flex; align-items: center; gap: 4px; } 
         .emp-name { font-weight: 500; font-size: 0.9rem; } 
         .btn-group { display: flex; gap: 4px; } 
-        .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: #fff; cursor: pointer; } 
+        .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: var(--card-bg); color: var(--text-main); cursor: pointer; } 
+        
         .sunday-theme .btn-present { background-color: var(--sunday-bg); color: var(--sunday-color); border-color: var(--sunday-color); } 
-        .sunday-theme .btn-absent { background-color: #f1f5f9; color: var(--text-light); } 
+        .sunday-theme .btn-absent { background-color: var(--bg-color); color: var(--text-light); } 
+        
         .ot-theme .btn-nasto-active { background-color: var(--ot-bg); color: var(--ot-color); border-color: var(--ot-color); } 
         .ot-theme .btn-faral-active { background-color: var(--faral-bg); color: var(--faral-color); border-color: var(--faral-color); } 
         .ot-theme .btn-only-ot-active { background-color: var(--blue-bg); color: var(--blue-color); border-color: var(--blue-color); } 
-        .ot-theme .btn-inactive { background-color: #f1f5f9; color: var(--text-light); } 
+        .ot-theme .btn-inactive { background-color: var(--bg-color); color: var(--text-light); } 
+        
         .delete-btn { background: none; border: none; color: var(--sunday-color); font-size: 1.1rem; padding: 2px 4px; cursor: pointer; display: none; } 
         .no-active-msg, .no-dept-msg { color: var(--text-light); font-size: 0.85rem; font-style: italic; text-align: center; width: 100%; padding: 15px 0; grid-column: 1/-1; } 
     </style>
@@ -344,8 +380,9 @@
         </div>
         <p id="main-sub">ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ</p>
         
-        <div class="lang-switcher-wrapper">
+        <div class="theme-switcher-wrapper">
             <button class="lang-btn" onclick="toggleLanguage()">🌐 English / ગુજરાતી</button>
+            <button class="theme-btn" onclick="toggleTheme()">🌓 Dark / Light</button>
         </div>
     </header>
 
@@ -490,6 +527,19 @@
             selectedDate = yyyy + '-' + mm + '-' + dd;
         }
         document.getElementById('attendance-date').value = selectedDate;
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('officeTheme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const activeTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+        localStorage.setItem('officeTheme', activeTheme);
     }
 
     function exportBackupData() {
@@ -681,8 +731,10 @@
         const filteredHeader = document.getElementById('filtered-header');
         const shiftTimeBox = document.getElementById('shift-time-box');
 
+        // Maintain mode classes, add theme on top
         if (mode === 'sunday') {
-            body.className = 'sunday-theme';
+            body.classList.add('sunday-theme');
+            body.classList.remove('ot-theme');
             btnSunday.className = 'mode-btn active-sunday';
             btnOt.className = 'mode-btn';
             reportHeader.innerText = labels[currentLang].repSun;
@@ -690,7 +742,8 @@
             extraFoodBox.style.display = 'none';
             shiftTimeBox.style.display = 'flex'; 
         } else {
-            body.className = 'ot-theme';
+            body.classList.add('ot-theme');
+            body.classList.remove('sunday-theme');
             btnSunday.className = 'mode-btn';
             btnOt.className = 'mode-btn active-ot';
             reportHeader.innerText = labels[currentLang].repOt;
@@ -786,6 +839,10 @@
         const listBox = document.getElementById('filtered-horizontal-box');
         const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
 
+        // temporary override for dark mode during capture to ensure clean white background output
+        const isDarkActive = document.body.classList.contains('dark-theme');
+        if(isDarkActive) document.body.classList.remove('dark-theme');
+
         snapHeader.style.display = 'block';
         listBox.classList.add('capture-mode-active');
         snapTitle.innerText = officeNames[currentLang].replace("📊 ", "");
@@ -805,6 +862,8 @@
         }).then(canvas => {
             snapHeader.style.display = 'none';
             listBox.classList.remove('capture-mode-active');
+            if(isDarkActive) document.body.classList.add('dark-theme'); // restore theme
+
             const imageLink = document.createElement('a');
             imageLink.download = `Attendance_${formattedDate.replace(/\//g, '-')}_${currentMode}.png`;
             imageLink.href = canvas.toDataURL('image/png');
@@ -993,6 +1052,7 @@
     }
 
     initDate();
+    initTheme();
     document.getElementById('main-title').innerText = officeNames[currentLang];
     document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
     document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
