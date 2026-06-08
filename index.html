@@ -879,8 +879,13 @@
 
         deptKeys.forEach((deptName, deptIndex) => {
             let deptPresentCount = 0;
-            let listPresent = [];
+            
+            // અલગ અલગ સ્ટેટસ વાઇઝ લિસ્ટ બનાવવા માટે
+            let listNasto = [];
+            let listFaral = [];
+            let listOnlyOt = [];
             let listAbsent = [];
+            let listPresentSunday = [];
             
             const inputId = `input-dept-${deptIndex}`;
             const deptCard = document.createElement('div');
@@ -906,7 +911,6 @@
             `;
 
             masterData[deptName].forEach((empName, index) => {
-                let isPresent = false;
                 let innerActionHTML = '';
                 let statusBadgeHTML = '';
 
@@ -916,34 +920,34 @@
                 let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
 
                 if (currentMode === 'sunday') {
-                    isPresent = isSun;
-                    if (isPresent) { 
+                    if (isSun) { 
                         deptPresentCount++; grandTotal++; 
                         statusBadgeHTML = `<span class="food-badge badge-yes">Yes</span>`; 
-                        listPresent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
+                        listPresentSunday.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
                     } else {
                         statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
                         listAbsent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: true });
                     }
-                    let statusText = isPresent ? "Yes" : "No";
-                    let buttonClass = isPresent ? "btn-present" : "btn-absent";
+                    let statusText = isSun ? "Yes" : "No";
+                    let buttonClass = isSun ? "btn-present" : "btn-absent";
                     innerActionHTML = `<button class="status-toggle-btn ${buttonClass}" onclick="toggleStatus('${deptName}', '${empName}', 'sunday')">${statusText}</button>`;
                 } else {
                     if (isNasto || isFaral || isOnlyOt) {
-                        isPresent = true;
                         deptPresentCount++; grandTotal++;
                         if (isNasto) { 
                             totalNasto++; 
                             statusBadgeHTML = `<span class="food-badge badge-nasto">${l.nBadge}</span>`; 
+                            listNasto.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
                         }
                         if (isFaral) { 
                             totalFaral++; 
                             statusBadgeHTML = `<span class="food-badge badge-faral">${l.fBadge}</span>`; 
+                            listFaral.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
                         }
                         if (isOnlyOt) {
                             statusBadgeHTML = `<span class="food-badge badge-only-ot">Yes</span>`;
+                            listOnlyOt.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
                         }
-                        listPresent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
                     } else {
                         statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
                         listAbsent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: true });
@@ -985,7 +989,13 @@
             reportItem.innerHTML = `<div>${deptName}</div> <span>${deptPresentCount}</span>`;
             reportGridBox.appendChild(reportItem);
 
-            let sortedStaffList = listPresent.concat(listAbsent);
+            // રીપોર્ટ માટે તમારા નિયમ મુજબ લાઈનસર ફિલ્ટરિંગ (N -> F -> OT -> No) અથવા (Yes -> No)
+            let sortedStaffList = [];
+            if (currentMode === 'sunday') {
+                sortedStaffList = listPresentSunday.concat(listAbsent);
+            } else {
+                sortedStaffList = listNasto.concat(listFaral, listOnlyOt, listAbsent);
+            }
 
             if (sortedStaffList.length > 0) {
                 anyEmployeeGlobal = true;
@@ -994,9 +1004,10 @@
                 deptGroupDiv.className = `filtered-dept-group`;
                 let groupHTML = `<div class="filtered-dept-header">${deptName}</div><ul class="filtered-vertical-list">`;
                 
-                let pIndex = 1;
+                let pIndex = 1; // સળંગ નંબરિંગ માટે કાઉન્ટર
                 sortedStaffList.forEach((emp) => {
-                    let displayIndex = emp.isAbsent ? '' : `${pIndex++}. `;
+                    // હવે હાજર (Yes/N/F/OT) અને ગેરહાજર (No) બંનેમાં નંબરિંગ સળંગ (Continue) ચાલશે
+                    let displayIndex = `${pIndex++}. `;
                     groupHTML += `<li class="filtered-emp-row"><div>${displayIndex}${emp.name}</div>${emp.statusBadge}</li>`;
                 });
                 groupHTML += `</ul>`;
