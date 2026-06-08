@@ -410,7 +410,7 @@
     </div>
 
     <div class="download-capture-area" id="capture-zone">
-        <div class="download-header" id="snap-header" style="display: none;">
+        <div class="download-header" id="snap-header">
             <h2 id="snap-title">ઓફિસ હાજરી રીપોર્ટ</h2>
             <p id="snap-date-mode">તારીખ: -- | મોડ: --</p>
         </div>
@@ -629,6 +629,7 @@
         let val = document.getElementById('shift-time-input').value.trim();
         shiftTimeRecords[selectedDate] = val;
         localStorage.setItem('officeDateWiseShiftTime', JSON.stringify(shiftTimeRecords));
+        renderAll();
     }
 
     function eraseAllAttendance() {
@@ -678,6 +679,7 @@
             officeNames[currentLang] = "📊 " + newTitle.trim();
             localStorage.setItem('officeCustomTitle', JSON.stringify(officeNames));
             document.getElementById('main-title').innerText = officeNames[currentLang];
+            renderAll();
         }
     }
 
@@ -731,7 +733,6 @@
         const filteredHeader = document.getElementById('filtered-header');
         const shiftTimeBox = document.getElementById('shift-time-box');
 
-        // Maintain mode classes, add theme on top
         if (mode === 'sunday') {
             body.classList.add('sunday-theme');
             body.classList.remove('ot-theme');
@@ -833,26 +834,13 @@
 
     function downloadReportImage() {
         const captureZone = document.getElementById('capture-zone');
-        const snapHeader = document.getElementById('snap-header');
-        const snapTitle = document.getElementById('snap-title');
-        const snapDateMode = document.getElementById('snap-date-mode');
         const listBox = document.getElementById('filtered-horizontal-box');
-        const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
+        const { formattedDate } = getFormattedDateAndDay(selectedDate);
 
-        // temporary override for dark mode during capture to ensure clean white background output
         const isDarkActive = document.body.classList.contains('dark-theme');
         if(isDarkActive) document.body.classList.remove('dark-theme');
 
-        snapHeader.style.display = 'block';
         listBox.classList.add('capture-mode-active');
-        snapTitle.innerText = officeNames[currentLang].replace("📊 ", "");
-        
-        let shiftTimeDisplay = "";
-        if (currentMode === 'sunday' && shiftTimeRecords[selectedDate]) {
-            shiftTimeDisplay = ` | Time: ${shiftTimeRecords[selectedDate]}`;
-        }
-        
-        snapDateMode.innerText = `${formattedDate} (${dayName}) | ${labels[currentLang].modeText}: ${currentMode.toUpperCase()}${shiftTimeDisplay}`;
 
         html2canvas(captureZone, {
             scale: 2, 
@@ -860,9 +848,8 @@
             useCORS: true,
             windowWidth: 1200 
         }).then(canvas => {
-            snapHeader.style.display = 'none';
             listBox.classList.remove('capture-mode-active');
-            if(isDarkActive) document.body.classList.add('dark-theme'); // restore theme
+            if(isDarkActive) document.body.classList.add('dark-theme'); 
 
             const imageLink = document.createElement('a');
             imageLink.download = `Attendance_${formattedDate.replace(/\//g, '-')}_${currentMode}.png`;
@@ -879,6 +866,18 @@
         gridBox.innerHTML = '';
         reportGridBox.innerHTML = '';
         filteredHorizontalBox.innerHTML = '';
+
+        // તારીખ બદલાતા વાર લાઈવ સ્ક્રીન પર બદલાઈ જાય તે માટે આ સેક્શન અહી ઉમેર્યું છે
+        const snapTitle = document.getElementById('snap-title');
+        const snapDateMode = document.getElementById('snap-date-mode');
+        const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
+        snapTitle.innerText = officeNames[currentLang].replace("📊 ", "");
+        
+        let shiftTimeDisplay = "";
+        if (currentMode === 'sunday' && shiftTimeRecords[selectedDate]) {
+            shiftTimeDisplay = ` | Time: ${shiftTimeRecords[selectedDate]}`;
+        }
+        snapDateMode.innerText = `${formattedDate} (${dayName}) | ${labels[currentLang].modeText}: ${currentMode.toUpperCase()}${shiftTimeDisplay}`;
 
         let grandTotal = 0;
         let totalNasto = 0;
