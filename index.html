@@ -288,6 +288,30 @@
         } 
         body.dark-theme .add-dept-form button { color: #0f172a; background-color: #f8fafc; }
         
+        /* Capture Area Header Styling */
+        .capture-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .capture-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .capture-header p {
+            margin: 6px 0 0 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .capture-mode-active .capture-header {
+            display: block !important;
+        }
+
         .download-capture-area { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
         .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } 
         @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } } 
@@ -309,7 +333,7 @@
         
         .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } 
         @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } 
-        .capture-mode-active { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
+        .capture-mode-active .filtered-horizontal-grid { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
 
         .filtered-dept-group { background: var(--panel-muted); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
         .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: var(--dept-header-bg); } 
@@ -400,13 +424,18 @@
                 </div>
             </div>
         </div>
-        <div class="add-dept-form" id="add-dept-container" style="display: none;">
+        <div class="add-dept-form" id="add-dept-container">
             <input type="text" id="new-dept-name" placeholder="નવો વિભાગ ઉમેરો..." onkeypress="handleDeptKeyPress(event)">
             <button id="add-dept-btn" onclick="addDepartment()">+ વિભાગ</button>
         </div>
     </div>
 
     <div class="download-capture-area" id="capture-zone">
+        <div class="capture-header" id="image-capture-header">
+            <h2 id="cap-office-title">Polish Assort</h2>
+            <p id="cap-date-details">05/06/2026 (શુક્રવાર (Friday)) | પ્રકાર: OT</p>
+        </div>
+
         <div class="summary-wrapper">
             <div class="panel-card">
                 <div class="panel-title" id="report-header">📋 ફાઇનલ કાઉન્ટ રીપોર્ટ</div>
@@ -459,7 +488,7 @@
     let isUnlocked = false; 
 
     let officeNames = JSON.parse(localStorage.getItem('officeCustomTitle')) || {
-        gu: "📊 ઓફિસ એટેન્ડન્સ  પ્લાનર", en: "📊 Office Attendance Planner"
+        gu: "📊 ઓફિસ એટેન્ડન્સ પ્લાનર", en: "📊 Office Attendance Planner"
     };
 
     let masterData = JSON.parse(localStorage.getItem('officeMasterStructure')) || {
@@ -646,18 +675,15 @@
     function toggleSecurityLock() {
         isUnlocked = !isUnlocked;
         const lockBtn = document.getElementById('main-lock-btn');
-        const addDeptForm = document.getElementById('add-dept-container');
         const mainEditBtn = document.getElementById('main-edit-title-btn');
 
         if (isUnlocked) {
             lockBtn.innerText = "🔓 Unlocked (Edit Mode)";
             lockBtn.classList.add('unlocked');
-            addDeptForm.style.display = 'flex';
             mainEditBtn.style.display = 'inline-block';
         } else {
             lockBtn.innerText = "🔒 Lock (Safe Mode)";
             lockBtn.classList.remove('unlocked');
-            addDeptForm.style.display = 'none';
             mainEditBtn.style.display = 'none';
         }
         renderAll(); 
@@ -826,13 +852,18 @@
 
     function downloadReportImage() {
         const captureZone = document.getElementById('capture-zone');
-        const listBox = document.getElementById('filtered-horizontal-box');
-        const { formattedDate } = getFormattedDateAndDay(selectedDate);
+        const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
+        
+        const cleanTitle = officeNames[currentLang].replace("📊 ", "");
+        document.getElementById('cap-office-title').innerText = cleanTitle;
+        
+        const modeLabel = currentMode === 'sunday' ? 'Sunday' : 'OT';
+        document.getElementById('cap-date-details').innerText = `${formattedDate} (${dayName}) | પ્રકાર: ${modeLabel}`;
 
         const isDarkActive = document.body.classList.contains('dark-theme');
         if(isDarkActive) document.body.classList.remove('dark-theme');
 
-        listBox.classList.add('capture-mode-active');
+        captureZone.classList.add('capture-mode-active');
 
         html2canvas(captureZone, {
             scale: 2, 
@@ -840,7 +871,7 @@
             useCORS: true,
             windowWidth: 1200 
         }).then(canvas => {
-            listBox.classList.remove('capture-mode-active');
+            captureZone.classList.remove('capture-mode-active');
             if(isDarkActive) document.body.classList.add('dark-theme'); 
 
             const imageLink = document.createElement('a');
@@ -880,7 +911,6 @@
         deptKeys.forEach((deptName, deptIndex) => {
             let deptPresentCount = 0;
             
-            // અલગ અલગ સ્ટેટસ વાઇઝ લિસ્ટ બનાવવા માટે
             let listNasto = [];
             let listFaral = [];
             let listOnlyOt = [];
@@ -989,7 +1019,6 @@
             reportItem.innerHTML = `<div>${deptName}</div> <span>${deptPresentCount}</span>`;
             reportGridBox.appendChild(reportItem);
 
-            // રીપોર્ટ માટે તમારા નિયમ મુજબ લાઈનસર ફિલ્ટરિંગ (N -> F -> OT -> No) અથવા (Yes -> No)
             let sortedStaffList = [];
             if (currentMode === 'sunday') {
                 sortedStaffList = listPresentSunday.concat(listAbsent);
@@ -1004,9 +1033,8 @@
                 deptGroupDiv.className = `filtered-dept-group`;
                 let groupHTML = `<div class="filtered-dept-header">${deptName}</div><ul class="filtered-vertical-list">`;
                 
-                let pIndex = 1; // સળંગ નંબરિંગ માટે કાઉન્ટર
+                let pIndex = 1; 
                 sortedStaffList.forEach((emp) => {
-                    // હવે હાજર (Yes/N/F/OT) અને ગેરહાજર (No) બંનેમાં નંબરિંગ સળંગ (Continue) ચાલશે
                     let displayIndex = `${pIndex++}. `;
                     groupHTML += `<li class="filtered-emp-row"><div>${displayIndex}${emp.name}</div>${emp.statusBadge}</li>`;
                 });
