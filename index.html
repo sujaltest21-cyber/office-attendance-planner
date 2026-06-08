@@ -289,9 +289,6 @@
         body.dark-theme .add-dept-form button { color: #0f172a; background-color: #f8fafc; }
         
         .download-capture-area { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
-        .download-header { text-align: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 10px; margin-bottom: 15px; } 
-        .download-header h2 { margin: 0; color: var(--primary-color); font-size: 1.5rem; } 
-        .download-header p { margin: 4px 0 0 0; font-weight: 700; color: var(--text-light); font-size: 0.95rem; } 
         .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } 
         @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } } 
         .panel-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } 
@@ -410,11 +407,6 @@
     </div>
 
     <div class="download-capture-area" id="capture-zone">
-        <div class="download-header" id="snap-header">
-            <h2 id="snap-title">ઓફિસ હાજરી રીપોર્ટ</h2>
-            <p id="snap-date-mode">તારીખ: -- | મોડ: --</p>
-        </div>
-
         <div class="summary-wrapper">
             <div class="panel-card">
                 <div class="panel-title" id="report-header">📋 ફાઇનલ કાઉન્ટ રીપોર્ટ</div>
@@ -866,18 +858,6 @@
         gridBox.innerHTML = '';
         reportGridBox.innerHTML = '';
         filteredHorizontalBox.innerHTML = '';
-
-        // તારીખ બદલાતા વાર લાઈવ સ્ક્રીન પર બદલાઈ જાય તે માટે આ સેક્શન અહી ઉમેર્યું છે
-        const snapTitle = document.getElementById('snap-title');
-        const snapDateMode = document.getElementById('snap-date-mode');
-        const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
-        snapTitle.innerText = officeNames[currentLang].replace("📊 ", "");
-        
-        let shiftTimeDisplay = "";
-        if (currentMode === 'sunday' && shiftTimeRecords[selectedDate]) {
-            shiftTimeDisplay = ` | Time: ${shiftTimeRecords[selectedDate]}`;
-        }
-        snapDateMode.innerText = `${formattedDate} (${dayName}) | ${labels[currentLang].modeText}: ${currentMode.toUpperCase()}${shiftTimeDisplay}`;
 
         let grandTotal = 0;
         let totalNasto = 0;
