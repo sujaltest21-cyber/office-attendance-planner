@@ -60,15 +60,27 @@ firebase.database().ref('/').on('value', (snapshot) => {
         officeNames = data.title || officeNames;
         
         // Auto-fix for corrupted text caused by earlier encoding issue
-        if (officeNames.gu && officeNames.gu.includes("ðŸ")) {
+        if (officeNames.gu && officeNames.gu.includes("ðŸ") || officeNames.gu && officeNames.gu.includes("?")) {
             officeNames = {
                 gu: "📊 ઓફિસ એટેન્ડન્સ પ્લાનર",
                 en: "📊 Office Attendance Planner"
             };
-            database.ref('/title').set(officeNames);
+            saveToFirebase(); // Force reset everything to fix corruption
+            return;
         }
 
-        masterData = data.master || {};
+        if (data.master) {
+            masterData = data.master;
+        } else {
+            // Restore defaults if missing
+            masterData = {
+                "1 P2P અંકિતભાઈ": [],
+                "2 ગાલા સુરેશભાઈ": [],
+                "3 ફાઇનલ હરેશભાઈ": [],
+                "4 ફાઇનલ અરવિંદભાઈ": []
+            };
+            database.ref('/master').set(masterData);
+        }
         attendanceRecords = data.records || {};
         extraFoodRecords = data.extra || {};
         shiftTimeRecords = data.shift || {};
