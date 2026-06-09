@@ -69,7 +69,7 @@ body {
         radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
     margin: 0;
-    padding: 24px 16px;
+    padding: 12px 16px;
     color: var(--text-main);
     min-height: 100vh;
     box-sizing: border-box;
@@ -90,7 +90,7 @@ body {
 /* Header Styles */
 header {
     text-align: center;
-    margin-bottom: 35px;
+    margin-bottom: 15px;
     position: relative;
 }
 
@@ -104,7 +104,7 @@ header {
 header h1 {
     color: var(--primary-color);
     margin: 0;
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     letter-spacing: -0.025em;
     background: var(--primary-gradient);
@@ -114,8 +114,8 @@ header h1 {
 
 header p {
     color: var(--text-light);
-    margin: 8px 0 0 0;
-    font-size: 1.05rem;
+    margin: 2px 0 0 0;
+    font-size: 0.9rem;
     font-weight: 500;
 }
 
@@ -157,43 +157,29 @@ header p {
     background-color: var(--bg-color);
 }
 
-/* Control Controls Row */
 .controls-row {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 30px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
     background: var(--card-bg);
-    padding: 18px;
-    border-radius: 16px;
+    padding: 8px 12px;
+    border-radius: 12px;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     border: var(--card-border);
-    transition: all 0.3s;
-}
-
-@media (min-width: 992px) {
-    .controls-row {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
 }
 
 .left-controls {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
-
-@media (min-width: 768px) {
-    .left-controls {
-        flex-direction: row;
-        align-items: center;
-        width: auto;
-    }
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Date Input Wrapper */
@@ -205,9 +191,9 @@ header p {
     font-size: 0.95rem;
     color: var(--text-main);
     background: var(--panel-muted);
-    padding: 8px 16px;
-    border-radius: 12px;
-    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    gap: 8px;
     border: 1px solid transparent;
     transition: border 0.3s;
 }
@@ -237,7 +223,7 @@ header p {
 .mode-switcher-container {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
@@ -287,9 +273,9 @@ header p {
 .shift-time-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: var(--panel-muted);
-    padding: 6px 16px;
+    padding: 4px 12px;
     border-radius: 9999px;
     border: 1px solid var(--border-color);
     transition: border 0.3s;
@@ -385,9 +371,9 @@ body.dark-theme .add-dept-form button {
 /* Capture Area (Image Zones) */
 .download-capture-area {
     background: var(--card-bg);
-    padding: 24px;
-    border-radius: 20px;
-    margin-bottom: 24px;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
     border: var(--card-border);
     box-shadow: var(--shadow-lg);
     transition: background-color 0.4s;
@@ -424,7 +410,7 @@ body.dark-theme .add-dept-form button {
 .summary-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 @media (min-width: 768px) {
@@ -437,8 +423,8 @@ body.dark-theme .add-dept-form button {
 /* Panel cards inside summary block */
 .panel-card {
     background: var(--card-bg);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 14px 16px;
     border: var(--card-border);
     box-shadow: var(--shadow-sm);
     display: flex;
@@ -446,12 +432,12 @@ body.dark-theme .add-dept-form button {
 }
 
 .panel-title {
-    margin: 0 0 16px 0;
-    font-size: 1.1rem;
+    margin: 0 0 12px 0;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-main);
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
+    padding-bottom: 8px;
 }
 
 .report-grid {
@@ -467,9 +453,9 @@ body.dark-theme .add-dept-form button {
 }
 
 .report-item {
-    padding: 12px 16px;
+    padding: 8px 12px;
     background: var(--panel-muted);
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -844,7 +830,7 @@ body.dark-theme .backup-btn.import-btn {
 .departments-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 14px;
 }
 
 @media (min-width: 600px) {
@@ -861,8 +847,8 @@ body.dark-theme .backup-btn.import-btn {
 
 .dept-card {
     background: var(--card-bg);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 14px;
     border: var(--card-border);
     box-shadow: var(--shadow-md);
     display: flex;
@@ -879,7 +865,7 @@ body.dark-theme .backup-btn.import-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .title-container {
@@ -972,7 +958,7 @@ body.dark-theme .backup-btn.import-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
