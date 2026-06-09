@@ -376,10 +376,18 @@ function changeExtra(type, val) {
     renderAll();
 }
 
+function formatTitleCase(str) {
+    if (!str) return '';
+    return str.split(' ').map(word => {
+        if(word.length === 0) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+}
+
 // Department Operations
 function addDepartment() {
     const input = document.getElementById('new-dept-name');
-    const deptName = input.value.trim();
+    const deptName = formatTitleCase(input.value.trim());
     if (deptName === '' || masterData[deptName]) return;
     masterData[deptName] = [];
     input.value = '';
@@ -428,7 +436,7 @@ function editDepartmentName(oldName) {
 // Employee Operations
 function addEmployee(deptName, inputId) {
     const input = document.getElementById(inputId);
-    const name = input.value.trim();
+    const name = formatTitleCase(input.value.trim());
     if (name === '') return;
     masterData[deptName].push(name);
     input.value = '';
@@ -638,7 +646,7 @@ function renderAll() {
     let grandTotal = 0;
     let totalNasto = 0;
     let totalFaral = 0;
-    let deptKeys = Object.keys(masterData);
+    let deptKeys = Object.keys(masterData).sort();
     let l = labels[currentLang];
 
     let currentExtra = extraFoodRecords[selectedDate] || { nasto: 0, faral: 0 };
@@ -738,10 +746,9 @@ function renderAll() {
         gridBox.appendChild(deptCard);
 
         // Append to Final Count Report Box always (even if count is 0)
-        let displayDeptName = deptName.replace(/^\d+\.?\s*/, '');
         const reportItem = document.createElement('div');
         reportItem.className = 'report-item';
-        reportItem.innerHTML = `${displayDeptName}: <span>${deptPresentCount}</span>`;
+        reportItem.innerHTML = `${deptName}: <span>${deptPresentCount}</span>`;
         reportGridBox.appendChild(reportItem);
     });
 
@@ -769,11 +776,9 @@ function renderAll() {
             hasAnyPresentStaff = true;
             let group = document.createElement('div');
             group.className = 'filtered-dept-group';
-            
-            let displayDeptName = deptName.replace(/^\d+\.?\s*/, '');
             let header = document.createElement('div');
             header.className = 'filtered-dept-header';
-            header.innerText = displayDeptName;
+            header.innerText = deptName;
             group.appendChild(header);
 
             let list = document.createElement('ul');

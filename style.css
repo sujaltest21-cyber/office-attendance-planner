@@ -159,7 +159,6 @@ header p {
 
 .controls-row {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
@@ -168,18 +167,29 @@ header p {
     background: var(--card-bg);
     padding: 8px 12px;
     border-radius: 12px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     box-shadow: var(--shadow-sm);
     border: var(--card-border);
 }
 
+@media (max-width: 768px) {
+    .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
 .left-controls {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .left-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 /* Date Input Wrapper */
@@ -212,6 +222,8 @@ header p {
     color: var(--text-main);
     background: var(--card-bg);
     transition: all 0.3s;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .date-input-wrapper input:focus {
@@ -327,9 +339,6 @@ header p {
     transition: all 0.3s;
 }
 
-.add-dept-form:focus-within {
-    border-color: var(--blue-color);
-    background-color: var(--card-bg);
     box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
@@ -348,6 +357,8 @@ header p {
     flex: 1;
     background: transparent;
     color: var(--text-main);
+    text-transform: capitalize;
+    min-width: 0;
 }
 
 .add-dept-form button {
@@ -912,7 +923,9 @@ body.dark-theme .backup-btn.import-btn {
     background: var(--panel-muted);
     color: var(--text-main);
     font-weight: 600;
+    text-transform: capitalize;
     transition: all 0.3s;
+    min-width: 0;
 }
 
 .add-emp-form input:focus {
