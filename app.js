@@ -1,940 +1,839 @@
-/* ============================================================
-   WorkTrack Pro — app.js
-   Full application logic for Attendance & Overtime Tracker
-   ============================================================ */
+// State Management & Storage Keys
+let currentLang = 'gu';
+let currentMode = 'sunday';
+let selectedDate = '';
+let isUnlocked = false;
 
-// ─── State ────────────────────────────────────────────────
-let state = {
-  employees: [],          // [{id, name, empId, dept}]
-  sundayAttendance: {},   // {"YYYY-MM-DD": {empId: "present"|"absent"}}
-  overtimeRecords: {},    // {"YYYY-MM-DD": {empId: true/false, hours, note}}
+// Default Data Structure
+let officeNames = {
+    gu: "📊 ઓફિસ એટેન્ડન્સ પ્લાનર",
+    en: "📊 Office Attendance Planner"
 };
 
-// ─── Persistence (Firebase + localStorage fallback) ───────
-let firebaseReady = false;
-let isUpdatingFromFirebase = false; // prevent save loops
+let masterData = {
+    "1 P2P અંકિતભાઈ": [],
+    "2 ગાલા સુરેશભાઈ": [],
+    "3 ફાઇનલ હરેશભાઈ": [],
+    "4 ફાઇનલ અરવિંદભાઈ": []
+};
 
-function saveState() {
-  // Always save to localStorage as fallback cache
-  localStorage.setItem('worktrack_state', JSON.stringify(state));
-  
-  // If Firebase is ready, save to cloud
-  if (firebaseReady && !isUpdatingFromFirebase) {
-    setSyncStatus('syncing', 'Syncing...');
-    saveToFirebase(state).then(() => {
-      setSyncStatus('connected', '☁️ Synced');
-    }).catch(() => {
-      setSyncStatus('disconnected', '⚠️ Offline');
-    });
-  }
-}
+let attendanceRecords = {};
+let extraFoodRecords = {};
+let shiftTimeRecords = {};
 
-function loadState() {
-  // Load from localStorage first (instant)
-  const raw = localStorage.getItem('worktrack_state');
-  if (raw) {
-    try { state = JSON.parse(raw); } catch(e) { console.error(e); }
-  }
-}
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAiqvmiyww8ApsZ7IPHVi2yCY4CdkKJ--I",
+  authDomain: "office-attendance-a7d98.firebaseapp.com",
+  databaseURL: "https://office-attendance-a7d98-default-rtdb.firebaseio.com",
+  projectId: "office-attendance-a7d98",
+  storageBucket: "office-attendance-a7d98.firebasestorage.app",
+  messagingSenderId: "184135944529",
+  appId: "1:184135944529:web:f6933cb98ebe96d5faab70"
+};
 
-// ─── Sync Status UI ──────────────────────────────────────
-function setSyncStatus(status, text) {
-  const dot = document.getElementById('syncDot');
-  const textEl = document.getElementById('syncText');
-  if (!dot || !textEl) return;
-  
-  dot.className = 'sync-dot ' + status;
-  textEl.textContent = text;
-}
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-// ─── Init ─────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  // Load from localStorage first (instant UI)
-  loadState();
+let isFirebaseConnected = false;
 
-  // Set today's date defaults
-  const today = getTodayStr();
-  document.getElementById('otDate').value = today;
-  document.getElementById('sundayDate').value = getNextSunday();
+// Firebase Connection State Listener
+firebase.database().ref('.info/connected').on('value', function(snap) {
+    const statusSpan = document.getElementById('connection-status');
+    if (!statusSpan) return;
+    if (snap.val() === true) {
+        statusSpan.innerText = '🟢 Online (Live Sync)';
+        statusSpan.style.color = '#10b981';
+        isFirebaseConnected = true;
+    } else {
+        statusSpan.innerText = '🔴 Offline';
+        statusSpan.style.color = '#ef4444';
+        isFirebaseConnected = false;
+    }
+});
 
-  // Set report month
-  const d = new Date();
-  document.getElementById('reportMonth').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
-  renderAll();
-  updateStats();
-
-  // Load OT for today
-  loadOvertimeForDate();
-
-  // ─── Firebase Setup ───────────────────────────────────
-  if (typeof isFirebaseConfigured === 'function' && isFirebaseConfigured()) {
-    setSyncStatus('syncing', 'Connecting...');
-    
-    if (initFirebase()) {
-      // Monitor connection
-      monitorConnection(
-        () => { // onConnected
-          setSyncStatus('connected', '☁️ Connected');
-        },
-        () => { // onDisconnected
-          setSyncStatus('disconnected', '🔴 Offline');
-        }
-      );
-
-      // Migrate localStorage → Firebase (one-time)
-      migrateLocalStorageToFirebase().then((migrated) => {
-        if (migrated) {
-          console.log('📦 Data migrated to Firebase!');
-          showToast('☁️ Data cloud માં migrate થઈ ગયો!', 'success');
-        }
+// Sync data from Firebase
+firebase.database().ref('/').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        officeNames = data.title || officeNames;
         
-        // Start listening for real-time updates
-        firebaseReady = true;
-        listenToFirebase((data) => {
-          isUpdatingFromFirebase = true;
-          state = {
-            employees:        data.employees        || [],
-            sundayAttendance: data.sundayAttendance || {},
-            overtimeRecords:  data.overtimeRecords  || {},
-          };
-          // Cache in localStorage
-          localStorage.setItem('worktrack_state', JSON.stringify(state));
-          renderAll();
-          updateStats();
-          setSyncStatus('connected', '☁️ Synced');
-          isUpdatingFromFirebase = false;
+        // Auto-fix for corrupted text caused by earlier encoding issue
+        if (officeNames.gu && officeNames.gu.includes("ðŸ")) {
+            officeNames = {
+                gu: "📊 ઓફિસ એટેન્ડન્સ પ્લાનર",
+                en: "📊 Office Attendance Planner"
+            };
+            database.ref('/title').set(officeNames);
+        }
+
+        masterData = data.master || {};
+        attendanceRecords = data.records || {};
+        extraFoodRecords = data.extra || {};
+        shiftTimeRecords = data.shift || {};
+        
+        // Update UI with new data
+        if(document.getElementById('main-title')) {
+            document.getElementById('main-title').innerText = officeNames[currentLang];
+        }
+        if(document.getElementById('shift-time-input')) {
+            document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+        }
+        renderAll();
+    } else {
+        // If DB is completely empty, initialize it with default structure
+        saveToFirebase();
+    }
+});
+
+function saveToFirebase() {
+    database.ref('/').set({
+        title: officeNames,
+        master: masterData,
+        records: attendanceRecords,
+        extra: extraFoodRecords,
+        shift: shiftTimeRecords
+    });
+}
+
+// Translation Dictionary
+const labels = {
+    gu: {
+        sub: "ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ",
+        labelDate: "📅 તારીખ:",
+        addDeptPl: "નવો વિભાગ ઉમેરો...",
+        addDeptBtn: "+ વિભાગ",
+        empPl: "કર્મચારીનું નામ...",
+        repSun: "📋 ફાઇનલ કાઉન્ટ રીપોર્ટ (Sunday)",
+        repOt: "📋 ફાઇનલ કાઉન્ટ રીપોર્ટ (Overtime)",
+        listSun: "👤 સન્ડે હાજરી રીપોર્ટ",
+        listOt: "👤 ઓવરટાઇમ હાજરી રીપોર્ટ",
+        extNasto: "🍩 એક્સ્ટ્રા નાસ્તો:",
+        extFaral: "🥛 એક્સ્ટ્રા ફરાળ:",
+        totalSun: "રવિવારે આવનાર કુલ કર્મચારીઓ",
+        totalOt: "ઓવરટાઇમ કરનાર કુલ કર્મચારીઓ",
+        orderNasto: "નાસ્તો ઓર્ડર",
+        orderFaral: "ફરાળ ઓર્ડર",
+        staff: "સ્ટાફ",
+        extra: "એક્સ્ટ્રા",
+        total: "કુલ",
+        nBadge: "N",
+        fBadge: "F",
+        emptyList: "કોઈ કર્મચારી નથી.",
+        noDept: "કોઈ વિભાગ નથી.",
+        dlBtn: "ડાઉનલોડ રીપોર્ટ (Image)",
+        modeText: "પ્રકાર",
+        shiftTimeText: "⏰ શિફ્ટ સમય:",
+        eraseBtnText: "🧹 ક્લિયર ઓલ",
+        eraseConfirm: "શું તમે આ તારીખનો તમામ હાજરી ડેટા અને શિફ્ટ ટાઇમ ક્લિયર કરવા માંગો છો?",
+        lockBtnLocked: "🔒 Lock (Safe Mode)",
+        lockBtnUnlocked: "🔓 Unlocked (Edit Mode)",
+        editDeptTitlePrompt: "વિભાગનું નવું નામ લખો:",
+        editEmpNamePrompt: "કર્મચારીનું નવું નામ લખો:",
+        editCompanyTitlePrompt: "તમારી ઓફિસ/કંપનીનું નવું નામ લખો:",
+        deleteDeptConfirm: "શું તમે આખો વિભાગ ડીલીટ કરવા માંગો છો?",
+        importSuccess: "બેકઅપ સફળતાપૂર્વક ઇમ્પોર્ટ થઈ ગયો છે! (Firebase માં સેવ થઈ ગયું)",
+        importError: "ભૂલ: આ માન્ય બેકઅપ ફાઇલ નથી!",
+        importFileError: "ફાઇલ વાંચવામાં ભૂલ આવી છે! કૃપા કરીને સાચી .txt બેકઅપ ફાઇલ સિલેક્ટ કરો.",
+        importConfirm: "શું તમે આ બેકઅપ ડેટા ઇમ્પોર્ટ કરવા માંગો છો? આનાથી ફાયરબેઝનો જૂનો ડેટા બદલાઈ જશે."
+    },
+    en: {
+        sub: "Department-wise Sunday & Overtime Attendance Management",
+        labelDate: "📅 Date:",
+        addDeptPl: "Add new department...",
+        addDeptBtn: "+ Dept",
+        empPl: "Employee name...",
+        repSun: "📋 Final Count Report (Sunday)",
+        repOt: "📋 Final Count Report (Overtime)",
+        listSun: "👤 Sunday Attendance Report",
+        listOt: "👤 Overtime Attendance Report",
+        extNasto: "🍩 Extra Snacks:",
+        extFaral: "🥛 Extra Faral:",
+        totalSun: "Total Employees Coming on Sunday",
+        totalOt: "Total Employees Doing Overtime",
+        orderNasto: "Snacks Order",
+        orderFaral: "Faral Order",
+        staff: "Staff",
+        extra: "Extra",
+        total: "Total",
+        nBadge: "N",
+        fBadge: "F",
+        emptyList: "No active attendance.",
+        noDept: "No departments added.",
+        dlBtn: "Download Report (Image)",
+        modeText: "Mode",
+        shiftTimeText: "⏰ Shift Time:",
+        eraseBtnText: "🧹 Clear All",
+        eraseConfirm: "Are you sure you want to clear all attendance and shift time data for this date?",
+        lockBtnLocked: "🔒 Lock (Safe Mode)",
+        lockBtnUnlocked: "🔓 Unlocked (Edit Mode)",
+        editDeptTitlePrompt: "Enter new name for department:",
+        editEmpNamePrompt: "Enter new name for employee:",
+        editCompanyTitlePrompt: "Enter Office/Company name:",
+        deleteDeptConfirm: "Are you sure you want to delete this department?",
+        importSuccess: "Backup imported successfully to Firebase!",
+        importError: "Error: Invalid backup file!",
+        importFileError: "Error reading file! Please select a valid .txt backup file.",
+        importConfirm: "Do you want to import this backup? It will overwrite current data on Firebase."
+    }
+};
+
+const daysDictionary = {
+    gu: ["રવિવાર (Sunday)", "સોમવાર (Monday)", "મંગળવાર (Tuesday)", "બુધવાર (Wednesday)", "જુરુવાર (Thursday)", "શુક્રવાર (Friday)", "શનિવાર (Saturday)"],
+    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+};
+
+// Date Handling
+function initDate() {
+    let savedDate = localStorage.getItem('officeSelectedDate');
+    if (savedDate) {
+        selectedDate = savedDate;
+    } else {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        selectedDate = yyyy + '-' + mm + '-' + dd;
+    }
+    document.getElementById('attendance-date').value = selectedDate;
+}
+
+function getFormattedDateAndDay(inputDateStr) {
+    if (!inputDateStr) return { formattedDate: '--', dayName: '--' };
+    const dateParts = inputDateStr.split('-');
+    const dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+    let dd = dateObj.getDate();
+    let mm = dateObj.getMonth() + 1;
+    if (dd < 10) dd = '0' + dd;
+    if (mm < 10) mm = '0' + mm;
+    return { 
+        formattedDate: `${dd}/${mm}/${dateObj.getFullYear()}`, 
+        dayName: daysDictionary[currentLang][dateObj.getDay()] 
+    };
+}
+
+function onDateChange() {
+    selectedDate = document.getElementById('attendance-date').value;
+    localStorage.setItem('officeSelectedDate', selectedDate);
+    document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+    renderAll();
+}
+
+function onShiftTimeChange() {
+    let val = document.getElementById('shift-time-input').value.trim();
+    shiftTimeRecords[selectedDate] = val;
+    saveToFirebase();
+    renderAll();
+}
+
+// Theme Handling
+function initTheme() {
+    const savedTheme = localStorage.getItem('officeTheme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    const activeTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+    localStorage.setItem('officeTheme', activeTheme);
+}
+
+// Localization Handling
+function toggleLanguage() {
+    currentLang = currentLang === 'gu' ? 'en' : 'gu';
+    localStorage.setItem('officeLang', currentLang);
+    updateLanguageUI();
+    renderAll();
+}
+
+function updateLanguageUI() {
+    const l = labels[currentLang];
+    document.getElementById('main-title').innerText = officeNames[currentLang];
+    document.getElementById('main-sub').innerText = l.sub;
+    document.getElementById('label-date').innerText = l.labelDate;
+    document.getElementById('new-dept-name').placeholder = l.addDeptPl;
+    document.getElementById('add-dept-btn').innerText = l.addDeptBtn;
+    document.getElementById('label-ext-nasto').innerText = l.extNasto;
+    document.getElementById('label-ext-faral').innerText = l.extFaral;
+    document.getElementById('label-download-btn').innerText = l.dlBtn;
+    document.getElementById('label-shift-time').innerText = l.shiftTimeText;
+    document.getElementById('main-erase-btn').innerText = l.eraseBtnText;
+    
+    // Switcher buttons lang labels
+    document.getElementById('btn-sunday').innerText = currentLang === 'gu' ? "☀️ Sunday" : "☀️ Sunday";
+    document.getElementById('btn-ot').innerText = currentLang === 'gu' ? "⏱️ Overtime" : "⏱️ Overtime";
+
+    const lockBtn = document.getElementById('main-lock-btn');
+    if (isUnlocked) {
+        lockBtn.innerText = l.lockBtnUnlocked;
+    } else {
+        lockBtn.innerText = l.lockBtnLocked;
+    }
+}
+
+// Mode switch Handling
+function switchMode(mode) {
+    currentMode = mode;
+    localStorage.setItem('officeMode', mode);
+    
+    const body = document.body;
+    const btnSunday = document.getElementById('btn-sunday');
+    const btnOt = document.getElementById('btn-ot');
+    const reportHeader = document.getElementById('report-header');
+    const extraFoodBox = document.getElementById('extra-food-box');
+    const filteredHeader = document.getElementById('filtered-header');
+    const shiftTimeBox = document.getElementById('shift-time-box');
+    const l = labels[currentLang];
+
+    if (mode === 'sunday') {
+        body.classList.add('sunday-theme');
+        body.classList.remove('ot-theme');
+        btnSunday.className = 'mode-btn active-sunday';
+        btnOt.className = 'mode-btn';
+        reportHeader.innerText = l.repSun;
+        filteredHeader.innerText = l.listSun;
+        extraFoodBox.style.display = 'none';
+        shiftTimeBox.style.display = 'flex'; 
+    } else {
+        body.classList.add('ot-theme');
+        body.classList.remove('sunday-theme');
+        btnSunday.className = 'mode-btn';
+        btnOt.className = 'mode-btn active-ot';
+        reportHeader.innerText = l.repOt;
+        filteredHeader.innerText = l.listOt;
+        extraFoodBox.style.display = 'flex';
+        shiftTimeBox.style.display = 'none'; 
+    }
+    renderAll();
+}
+
+// Attendance Records helper functions
+function getStatus(deptName, empName, field) {
+    let key = `${selectedDate}_${deptName}_${empName}`;
+    return attendanceRecords[key] ? attendanceRecords[key][field] : false;
+}
+
+function toggleStatus(deptName, empName, field) {
+    let key = `${selectedDate}_${deptName}_${empName}`;
+    if (!attendanceRecords[key]) {
+        attendanceRecords[key] = { sunday: false, nasto: false, faral: false, onlyOt: false };
+    }
+    
+    if (field === 'sunday') { 
+        attendanceRecords[key].sunday = !attendanceRecords[key].sunday; 
+    } else if (field === 'nasto') { 
+        attendanceRecords[key].nasto = !attendanceRecords[key].nasto; 
+        if (attendanceRecords[key].nasto) {
+            attendanceRecords[key].faral = false;
+            attendanceRecords[key].onlyOt = false;
+        }
+    } else if (field === 'faral') { 
+        attendanceRecords[key].faral = !attendanceRecords[key].faral; 
+        if (attendanceRecords[key].faral) {
+            attendanceRecords[key].nasto = false;
+            attendanceRecords[key].onlyOt = false;
+        }
+    } else if (field === 'onlyOt') {
+        attendanceRecords[key].onlyOt = !attendanceRecords[key].onlyOt;
+        if (attendanceRecords[key].onlyOt) {
+            attendanceRecords[key].nasto = false;
+            attendanceRecords[key].faral = false;
+        }
+    }
+    saveToFirebase();
+    renderAll();
+}
+
+// Extra foods
+function changeExtra(type, val) {
+    if (!extraFoodRecords[selectedDate]) {
+        extraFoodRecords[selectedDate] = { nasto: 0, faral: 0 };
+    }
+    extraFoodRecords[selectedDate][type] += val;
+    if (extraFoodRecords[selectedDate][type] < 0) {
+        extraFoodRecords[selectedDate][type] = 0;
+    }
+    saveToFirebase();
+    renderAll();
+}
+
+// Department Operations
+function addDepartment() {
+    const input = document.getElementById('new-dept-name');
+    const deptName = input.value.trim();
+    if (deptName === '' || masterData[deptName]) return;
+    masterData[deptName] = [];
+    input.value = '';
+    saveToFirebase();
+    renderAll();
+}
+
+function handleDeptKeyPress(event) {
+    if (event.key === 'Enter') addDepartment();
+}
+
+function deleteDepartment(deptName) {
+    const l = labels[currentLang];
+    if (confirm(`${l.deleteDeptConfirm} "${deptName}"?`)) {
+        delete masterData[deptName];
+        saveToFirebase();
+        renderAll();
+    }
+}
+
+function editDepartmentName(oldName) {
+    if (!isUnlocked) return;
+    const l = labels[currentLang];
+    let newName = prompt(`${l.editDeptTitlePrompt} "${oldName}"`, oldName);
+    if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+        newName = newName.trim();
+        masterData[newName] = masterData[oldName];
+        delete masterData[oldName];
+        
+        // Migrate records key names to avoid data loss
+        Object.keys(attendanceRecords).forEach(key => {
+            const prefix = `${selectedDate}_${oldName}_`;
+            if (key.startsWith(prefix)) {
+                const empPart = key.replace(prefix, "");
+                const newKey = `${selectedDate}_${newName}_${empPart}`;
+                attendanceRecords[newKey] = attendanceRecords[key];
+                delete attendanceRecords[key];
+            }
         });
-      });
-    } else {
-      setSyncStatus('disconnected', '❌ Firebase Error');
-    }
-  } else {
-    // Firebase not configured - show setup needed
-    setSyncStatus('not-configured', '⚙️ Setup Required');
-    console.log('ℹ️ Firebase not configured. Using localStorage only.');
-    console.log('📖 firebase-config.js માં તમારો Firebase config paste કરો.');
-  }
-});
 
+        saveToFirebase();
+        renderAll();
+    }
+}
+
+// Employee Operations
+function addEmployee(deptName, inputId) {
+    const input = document.getElementById(inputId);
+    const name = input.value.trim();
+    if (name === '') return;
+    masterData[deptName].push(name);
+    input.value = '';
+    saveToFirebase();
+    renderAll();
+}
+
+function handleEmpKeyPress(event, deptName, inputId) {
+    if (event.key === 'Enter') addEmployee(deptName, inputId);
+}
+
+function deleteEmployee(deptName, index) {
+    const empName = masterData[deptName][index];
+    masterData[deptName].splice(index, 1);
+    
+    // Clean up record entry
+    let key = `${selectedDate}_${deptName}_${empName}`;
+    if (attendanceRecords[key]) delete attendanceRecords[key];
+
+    saveToFirebase();
+    renderAll();
+}
+
+function editEmployeeName(deptName, index, oldName) {
+    if (!isUnlocked) return;
+    const l = labels[currentLang];
+    let newName = prompt(`${l.editEmpNamePrompt} "${oldName}"`, oldName);
+    if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+        newName = newName.trim();
+        masterData[deptName][index] = newName;
+
+        // Migrate records key name
+        let oldKey = `${selectedDate}_${deptName}_${oldName}`;
+        let newKey = `${selectedDate}_${deptName}_${newName}`;
+        if (attendanceRecords[oldKey]) {
+            attendanceRecords[newKey] = attendanceRecords[oldKey];
+            delete attendanceRecords[oldKey];
+        }
+
+        saveToFirebase();
+        renderAll();
+    }
+}
+
+// Main Title Edit
+function editMainTitle() {
+    if (!isUnlocked) return;
+    const l = labels[currentLang];
+    let newTitle = prompt(l.editCompanyTitlePrompt, officeNames[currentLang].replace("📊 ", ""));
+    if (newTitle && newTitle.trim() !== "") {
+        officeNames[currentLang] = "📊 " + newTitle.trim();
+        saveToFirebase();
+        renderAll();
+    }
+}
+
+// Erase All Data for selected date
+function eraseAllAttendance() {
+    const l = labels[currentLang];
+    if (confirm(l.eraseConfirm)) {
+        Object.keys(attendanceRecords).forEach(key => {
+            if (key.startsWith(selectedDate + "_")) {
+                delete attendanceRecords[key];
+            }
+        });
+        if (extraFoodRecords[selectedDate]) delete extraFoodRecords[selectedDate];
+        if (shiftTimeRecords[selectedDate]) delete shiftTimeRecords[selectedDate];
+        
+        saveToFirebase();
+        
+        document.getElementById('shift-time-input').value = '';
+        renderAll();
+    }
+}
+
+// Security Edit Toggle Lock
+function toggleSecurityLock() {
+    isUnlocked = !isUnlocked;
+    const lockBtn = document.getElementById('main-lock-btn');
+    const mainEditBtn = document.getElementById('main-edit-title-btn');
+    const addDeptContainer = document.getElementById('add-dept-container');
+    const l = labels[currentLang];
+
+    if (isUnlocked) {
+        lockBtn.innerText = l.lockBtnUnlocked;
+        lockBtn.classList.add('unlocked');
+        mainEditBtn.style.display = 'inline-block';
+        addDeptContainer.style.display = 'flex';
+    } else {
+        lockBtn.innerText = l.lockBtnLocked;
+        lockBtn.classList.remove('unlocked');
+        mainEditBtn.style.display = 'none';
+        addDeptContainer.style.display = 'none';
+    }
+    renderAll(); 
+}
+
+// Data Backup Utilities
+function exportBackupData() {
+    const backupObject = {
+        officeCustomTitle: JSON.stringify(officeNames),
+        officeMasterStructure: JSON.stringify(masterData),
+        officeDateWiseRecords: JSON.stringify(attendanceRecords),
+        officeDateWiseExtraFood: JSON.stringify(extraFoodRecords),
+        officeDateWiseShiftTime: JSON.stringify(shiftTimeRecords)
+    };
+    const jsonString = JSON.stringify(backupObject);
+    const blob = new Blob([jsonString], { type: "text/plain;charset=utf-8" });
+    const downloadAnchor = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    downloadAnchor.href = URL.createObjectURL(blob);
+    downloadAnchor.setAttribute("download", `attendance_backup_${today}.txt`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
+
+function triggerImportClick() {
+    document.getElementById('hidden-file-input').click();
+}
+
+function importBackupData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const l = labels[currentLang];
+        try {
+            const parsedData = JSON.parse(e.target.result);
+            if (!parsedData.officeMasterStructure && !parsedData.officeDateWiseRecords) {
+                alert(l.importError);
+                return;
+            }
+
+            if (confirm(l.importConfirm)) {
+                if (parsedData.officeCustomTitle) officeNames = JSON.parse(parsedData.officeCustomTitle);
+                if (parsedData.officeMasterStructure) masterData = JSON.parse(parsedData.officeMasterStructure);
+                if (parsedData.officeDateWiseRecords) attendanceRecords = JSON.parse(parsedData.officeDateWiseRecords);
+                if (parsedData.officeDateWiseExtraFood) extraFoodRecords = JSON.parse(parsedData.officeDateWiseExtraFood);
+                if (parsedData.officeDateWiseShiftTime) shiftTimeRecords = JSON.parse(parsedData.officeDateWiseShiftTime);
+
+                saveToFirebase(); // Push new imported data to Firebase
+                
+                document.getElementById('main-title').innerText = officeNames[currentLang];
+                onDateChange();
+                alert(l.importSuccess);
+            }
+        } catch (err) {
+            console.error(err);
+            alert(l.importFileError);
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; 
+}
+
+// Download Report PNG Image Canvas Logic
+function downloadReportImage() {
+    const captureZone = document.getElementById('capture-zone');
+    const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
+    
+    const cleanTitle = officeNames[currentLang].replace("📊 ", "");
+    document.getElementById('cap-office-title').innerText = cleanTitle;
+    
+    const modeLabel = currentMode === 'sunday' ? 'Sunday' : 'OT';
+    
+    // Add details dynamically
+    let subtitleText = `${formattedDate} (${dayName}) | ${labels[currentLang].modeText}: ${modeLabel}`;
+    if (currentMode === 'sunday' && shiftTimeRecords[selectedDate]) {
+        subtitleText += ` | ${shiftTimeRecords[selectedDate]}`;
+    }
+    document.getElementById('cap-date-details').innerText = subtitleText;
+
+    // Temporarily disable dark theme styles for the export capture
+    const isDarkActive = document.body.classList.contains('dark-theme');
+    if (isDarkActive) document.body.classList.remove('dark-theme');
+
+    captureZone.classList.add('capture-mode-active');
+
+    // Run canvas capturing
+    html2canvas(captureZone, {
+        scale: 2, 
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        windowWidth: 1200 
+    }).then(canvas => {
+        captureZone.classList.remove('capture-mode-active');
+        if (isDarkActive) document.body.classList.add('dark-theme'); 
+
+        const imageLink = document.createElement('a');
+        imageLink.download = `Attendance_${formattedDate.replace(/\//g, '-')}_${currentMode}.png`;
+        imageLink.href = canvas.toDataURL('image/png');
+        imageLink.click();
+    });
+}
+
+// Core Rendering UI
 function renderAll() {
-  renderEmployeeList();
-  renderSundayGrid();
-  renderSundayHistory();
-  renderOvertimeGrid();
-  renderOTHistory();
-  generateReport();
-}
+    const gridBox = document.getElementById('main-departments-grid');
+    const reportGridBox = document.getElementById('report-grid-box');
+    const filteredHorizontalBox = document.getElementById('filtered-horizontal-box');
+    
+    gridBox.innerHTML = '';
+    reportGridBox.innerHTML = '';
+    filteredHorizontalBox.innerHTML = '';
 
-// ─── Helpers ──────────────────────────────────────────────
-function getTodayStr() {
-  return new Date().toISOString().split('T')[0];
-}
-function getNextSunday() {
-  const d = new Date();
-  const day = d.getDay(); // 0=Sun
-  const diff = day === 0 ? 0 : (7 - day);
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().split('T')[0];
-}
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  const days = ['રવિ','સોમ','મંગળ','બુધ','ગુરુ','શુક્ર','શનિ'];
-  const months = ['જાન','ફેબ','માર','એપ્ર','મે','જૂન','જુલ','ઓગ','સપ્ટ','ઓક્ટ','નવ','ડિસ'];
-  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-}
-function uid() {
-  return Math.random().toString(36).slice(2, 9);
-}
+    let grandTotal = 0;
+    let totalNasto = 0;
+    let totalFaral = 0;
+    let deptKeys = Object.keys(masterData);
+    let l = labels[currentLang];
 
-// ─── Toast ────────────────────────────────────────────────
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  setTimeout(() => { t.className = 'toast'; }, 3000);
-}
+    let currentExtra = extraFoodRecords[selectedDate] || { nasto: 0, faral: 0 };
+    document.getElementById('ext-nasto-val').innerText = currentExtra.nasto;
+    document.getElementById('ext-faral-val').innerText = currentExtra.faral;
 
-// ─── Modal ────────────────────────────────────────────────
-let modalCallback = null;
-function showModal(title, desc, onConfirm) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalDesc').textContent = desc;
-  document.getElementById('modal').style.display = 'flex';
-  modalCallback = onConfirm;
-  document.getElementById('modalConfirmBtn').onclick = () => { onConfirm(); closeModal(); };
-}
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  modalCallback = null;
-}
-
-// ─── Tab Switching ────────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tabContent-' + tab).classList.add('active');
-  const btnMap = { employees:'tabEmp', sunday:'tabSun', overtime:'tabOT', report:'tabReport' };
-  document.getElementById(btnMap[tab]).classList.add('active');
-
-  if (tab === 'sunday')   renderSundayGrid();
-  if (tab === 'overtime') { renderOvertimeGrid(); loadOvertimeForDate(); }
-  if (tab === 'report')   generateReport();
-}
-
-// ─── Stats ────────────────────────────────────────────────
-function updateStats() {
-  document.getElementById('totalEmpCount').textContent = state.employees.length;
-
-  // Sunday - use most recent Sunday record
-  const sunDates = Object.keys(state.sundayAttendance).sort().reverse();
-  if (sunDates.length > 0) {
-    const latest = state.sundayAttendance[sunDates[0]];
-    let coming = 0, notComing = 0;
-    Object.values(latest).forEach(v => { if (v === 'present') coming++; else notComing++; });
-    document.getElementById('sunComingCount').textContent = coming;
-    document.getElementById('sunNotComingCount').textContent = notComing;
-  } else {
-    document.getElementById('sunComingCount').textContent = '—';
-    document.getElementById('sunNotComingCount').textContent = '—';
-  }
-
-  // Today OT
-  const today = getTodayStr();
-  const todayOT = state.overtimeRecords[today];
-  if (todayOT) {
-    const count = Object.values(todayOT.employees || {}).filter(Boolean).length;
-    document.getElementById('otTodayCount').textContent = count;
-  } else {
-    document.getElementById('otTodayCount').textContent = '0';
-  }
-}
-
-// ─── EMPLOYEES ────────────────────────────────────────────
-function addEmployee() {
-  const name  = document.getElementById('empName').value.trim();
-  const empId = document.getElementById('empId').value.trim();
-  const dept  = document.getElementById('empDept').value;
-
-  if (!name) { showToast('⚠️ Employee નામ ભરો', 'error'); return; }
-
-  const emp = { id: uid(), name, empId: empId || `EMP${String(state.employees.length+1).padStart(3,'0')}`, dept: dept || 'Other' };
-  state.employees.push(emp);
-  saveState();
-
-  document.getElementById('empName').value = '';
-  document.getElementById('empId').value = '';
-  document.getElementById('empDept').value = '';
-
-  renderEmployeeList();
-  updateStats();
-  showToast(`✅ "${name}" ઉમેરવામાં આવ્યો`);
-}
-
-function deleteEmployee(id) {
-  const emp = state.employees.find(e => e.id === id);
-  showModal(
-    'Employee Delete?',
-    `"${emp?.name}" ને delete કરવા માગો છો? સંબંધિત records પણ delete થઈ જશે.`,
-    () => {
-      state.employees = state.employees.filter(e => e.id !== id);
-      // Clean from attendance & ot records
-      Object.keys(state.sundayAttendance).forEach(dt => { delete state.sundayAttendance[dt][id]; });
-      Object.keys(state.overtimeRecords).forEach(dt => {
-        if (state.overtimeRecords[dt].employees) delete state.overtimeRecords[dt].employees[id];
-      });
-      saveState();
-      renderAll();
-      updateStats();
-      showToast(`🗑️ Employee delete કરવામાં આવ્યો`);
+    if (deptKeys.length === 0) {
+        gridBox.innerHTML = `<div class="no-dept-msg">${l.noDept}</div>`;
+        filteredHorizontalBox.innerHTML = `<div class="no-active-msg">${l.emptyList}</div>`;
+        document.getElementById('r-total-text').innerHTML = `<span class="grand-total-text">${l.total}: 0</span>`;
+        return;
     }
-  );
-}
 
-function renderEmployeeList() {
-  const container = document.getElementById('employeeList');
-  const search = document.getElementById('searchEmp')?.value?.toLowerCase() || '';
-  const list = state.employees.filter(e =>
-    e.name.toLowerCase().includes(search) ||
-    e.empId.toLowerCase().includes(search) ||
-    e.dept.toLowerCase().includes(search)
-  );
+    deptKeys.forEach((deptName, deptIndex) => {
+        let deptPresentCount = 0;
+        const inputId = `input-dept-${deptIndex}`;
+        
+        let deleteStyle = isUnlocked ? 'display: inline-flex;' : 'display: none;';
+        let editStyle = isUnlocked ? 'display: inline-flex;' : 'display: none;';
+        let showEmpInputStyle = isUnlocked ? 'display: flex;' : 'display: none;';
+        
+        const deptCard = document.createElement('div');
+        deptCard.className = 'dept-card';
+        
+        let cardHTML = `
+            <div class="dept-header">
+                <div class="title-container">
+                    <h3 class="dept-title">${deptName}</h3>
+                    <button class="edit-btn" style="${editStyle}" onclick="editDepartmentName('${deptName}')" title="Edit Department Name">✏️</button>
+                </div>
+                <button class="delete-dept-btn" style="${deleteStyle}" onclick="deleteDepartment('${deptName}')" title="Delete Department">✕</button>
+            </div>
+            <div class="add-emp-form" style="${showEmpInputStyle}">
+                <input type="text" id="${inputId}" placeholder="${l.empPl}" onkeypress="handleEmpKeyPress(event, '${deptName}', '${inputId}')" aria-label="Employee Name">
+                <button onclick="addEmployee('${deptName}', '${inputId}')">+</button>
+            </div>
+            <ul class="emp-list">
+        `;
 
-  if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state">
-      <span class="empty-icon">👥</span>
-      <p>કોઈ employee મળ્યો નહીં</p>
-      <span>${search ? 'Search refine કરો' : 'ઉપરના ફોર્મ દ્વારા employees ઉમેરો'}</span>
-    </div>`;
-    return;
-  }
+        const employees = masterData[deptName] || [];
+        if (employees.length === 0) {
+            cardHTML += `<li class="no-active-msg">${l.emptyList}</li>`;
+        } else {
+            employees.forEach((empName, index) => {
+                let innerActionHTML = '';
+                let isSun = getStatus(deptName, empName, 'sunday');
+                let isNasto = getStatus(deptName, empName, 'nasto');
+                let isFaral = getStatus(deptName, empName, 'faral');
+                let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
 
-  container.innerHTML = list.map(emp => `
-    <div class="emp-row" id="empRow-${emp.id}">
-      <div class="emp-avatar">${getInitials(emp.name)}</div>
-      <div class="emp-info">
-        <div class="emp-name">${emp.name}</div>
-        <div class="emp-meta">${emp.empId} &bull; ${emp.dept}</div>
-      </div>
-      <span class="emp-badge">${emp.dept}</span>
-      <button class="btn-icon" onclick="deleteEmployee('${emp.id}')" title="Delete">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14H6L5 6"></path>
-          <path d="M10 11v6"></path><path d="M14 11v6"></path>
-          <path d="M9 6V4h6v2"></path>
-        </svg>
-      </button>
-    </div>
-  `).join('');
-}
+                if (currentMode === 'sunday') {
+                    if (isSun) { 
+                        deptPresentCount++; 
+                        grandTotal++; 
+                    }
+                    let statusText = isSun ? "Yes" : "No";
+                    let buttonClass = isSun ? "btn-present" : "btn-absent";
+                    innerActionHTML = `<button class="status-toggle-btn ${buttonClass}" onclick="toggleStatus('${deptName}', '${empName}', 'sunday')">${statusText}</button>`;
+                } else {
+                    if (isNasto || isFaral || isOnlyOt) {
+                        deptPresentCount++; 
+                        grandTotal++;
+                        if (isNasto) totalNasto++; 
+                        if (isFaral) totalFaral++; 
+                    }
+                    let nClass = isNasto ? "btn-nasto-active" : "btn-inactive";
+                    let fClass = isFaral ? "btn-faral-active" : "btn-inactive";
+                    let otClass = isOnlyOt ? "btn-only-ot-active" : "btn-inactive";
+                    
+                    innerActionHTML = `
+                        <button class="status-toggle-btn ${nClass}" onclick="toggleStatus('${deptName}', '${empName}', 'nasto')">${l.nBadge}</button>
+                        <button class="status-toggle-btn ${fClass}" onclick="toggleStatus('${deptName}', '${empName}', 'faral')">${l.fBadge}</button>
+                        <button class="status-toggle-btn ${otClass}" onclick="toggleStatus('${deptName}', '${empName}', 'onlyOt')">OT</button>
+                    `;
+                }
 
-// ─── SUNDAY ATTENDANCE ────────────────────────────────────
-let sundaySelections = {}; // {empId: 'present'|'absent'}
+                let showEmpDeleteStyle = isUnlocked ? 'display: inline-flex;' : 'display: none;';
+                let empEditStyle = isUnlocked ? 'display: inline-flex;' : 'display: none;';
 
-function renderSundayGrid() {
-  const container = document.getElementById('sundayAttendanceGrid');
-  const date = document.getElementById('sundayDate')?.value;
+                cardHTML += `
+                    <li class="emp-item">
+                        <div class="name-container">
+                            <span class="emp-name" onclick="editEmployeeName('${deptName}', ${index}, '${empName}')">${empName}</span>
+                            <button class="edit-btn" style="${empEditStyle}" onclick="editEmployeeName('${deptName}', ${index}, '${empName}')" title="Edit Employee Name">✏️</button>
+                        </div>
+                        <div class="btn-group">
+                            ${innerActionHTML}
+                            <button class="delete-btn" style="${showEmpDeleteStyle}" onclick="deleteEmployee('${deptName}', ${index})" title="Delete Employee">✕</button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
 
-  if (state.employees.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="empty-icon">📅</span>
-      <p>Employee ઉમેર્યા નથી</p>
-      <span>પ્રથમ "Employees" tab માં employees ઉમેરો</span></div>`;
-    return;
-  }
+        cardHTML += `</ul>`;
+        deptCard.innerHTML = cardHTML;
+        gridBox.appendChild(deptCard);
 
-  // Load existing or init
-  sundaySelections = date && state.sundayAttendance[date]
-    ? { ...state.sundayAttendance[date] }
-    : {};
+        // Append to Final Count Report Box if there is any attendance
+        if (deptPresentCount > 0) {
+            const reportItem = document.createElement('div');
+            reportItem.className = 'report-item';
+            reportItem.innerHTML = `${deptName}: <span>${deptPresentCount}</span>`;
+            reportGridBox.appendChild(reportItem);
+        }
+    });
 
-  container.innerHTML = state.employees.map(emp => {
-    const status = sundaySelections[emp.id] || '';
-    return `
-    <div class="att-card ${status}" id="sunCard-${emp.id}">
-      <div class="att-avatar">${getInitials(emp.name)}</div>
-      <div class="att-info">
-        <div class="att-name">${emp.name}</div>
-        <div class="att-dept">${emp.empId} &bull; ${emp.dept}</div>
-      </div>
-      <div class="att-toggle">
-        <button class="toggle-pill ${status==='present'?'active-green':''}" onclick="setSundayStatus('${emp.id}','present')">✓ આવશે</button>
-        <button class="toggle-pill ${status==='absent'?'active-red':''}" onclick="setSundayStatus('${emp.id}','absent')">✗ નહીં</button>
-      </div>
-    </div>`;
-  }).join('');
-}
+    // Populate Present Staff List grouped by department
+    let hasAnyPresentStaff = false;
+    deptKeys.forEach((deptName) => {
+        let activeEmps = [];
+        let employees = masterData[deptName] || [];
+        employees.forEach((empName) => {
+            let isSun = getStatus(deptName, empName, 'sunday');
+            let isNasto = getStatus(deptName, empName, 'nasto');
+            let isFaral = getStatus(deptName, empName, 'faral');
+            let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
 
-function setSundayStatus(empId, status) {
-  sundaySelections[empId] = status;
-  const card = document.getElementById(`sunCard-${empId}`);
-  card.className = `att-card ${status}`;
-  card.querySelectorAll('.toggle-pill').forEach(btn => btn.className = 'toggle-pill');
-  const [btnPresent, btnAbsent] = card.querySelectorAll('.toggle-pill');
-  if (status === 'present') btnPresent.className = 'toggle-pill active-green';
-  if (status === 'absent')  btnAbsent.className  = 'toggle-pill active-red';
-}
+            if (currentMode === 'sunday' && isSun) {
+                activeEmps.push({ name: empName, badgeClass: 'badge-yes', badgeText: 'Yes' });
+            } else if (currentMode === 'ot') {
+                if (isNasto) activeEmps.push({ name: empName, badgeClass: 'badge-nasto', badgeText: l.nBadge });
+                else if (isFaral) activeEmps.push({ name: empName, badgeClass: 'badge-faral', badgeText: l.fBadge });
+                else if (isOnlyOt) activeEmps.push({ name: empName, badgeClass: 'badge-only-ot', badgeText: 'OT' });
+            }
+        });
 
-function markAllSunday(status) {
-  state.employees.forEach(emp => setSundayStatus(emp.id, status));
-}
+        if (activeEmps.length > 0) {
+            hasAnyPresentStaff = true;
+            let group = document.createElement('div');
+            group.className = 'filtered-dept-group';
+            
+            let header = document.createElement('div');
+            header.className = 'filtered-dept-header';
+            header.innerText = deptName;
+            group.appendChild(header);
 
-function saveSundayAttendance() {
-  const date = document.getElementById('sundayDate').value;
-  if (!date) { showToast('⚠️ Sunday date પસંદ કરો', 'error'); return; }
-  if (Object.keys(sundaySelections).length === 0) { showToast('⚠️ ઓછામાં ઓછો 1 employee select કરો', 'error'); return; }
+            let list = document.createElement('ul');
+            list.className = 'filtered-vertical-list';
+            activeEmps.forEach((emp) => {
+                let row = document.createElement('li');
+                row.className = 'filtered-emp-row';
+                row.innerHTML = `<span>${emp.name}</span> <span class="food-badge ${emp.badgeClass}">${emp.badgeText}</span>`;
+                list.appendChild(row);
+            });
+            group.appendChild(list);
+            filteredHorizontalBox.appendChild(group);
+        }
+    });
 
-  state.sundayAttendance[date] = { ...sundaySelections };
-  saveState();
-  updateStats();
-  renderSundayHistory();
-  showToast(`✅ Sunday (${formatDate(date)}) ની હાજરી save થઈ`);
-}
+    if (!hasAnyPresentStaff) {
+        filteredHorizontalBox.innerHTML = `<div class="no-active-msg">${l.emptyList}</div>`;
+    }
 
-function renderSundayHistory() {
-  const container = document.getElementById('sundayHistory');
-  const dates = Object.keys(state.sundayAttendance).sort().reverse();
-
-  if (dates.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span><p>કોઈ Sunday record નથી</p></div>`;
-    return;
-  }
-
-  container.innerHTML = dates.map(dt => {
-    const record = state.sundayAttendance[dt];
-    const coming    = Object.values(record).filter(v => v === 'present').length;
-    const notComing = Object.values(record).filter(v => v === 'absent').length;
-    const empDetails = state.employees.map(emp => {
-      const status = record[emp.id];
-      if (!status) return '';
-      return `<div class="hist-emp-pill ${status === 'present' ? 'present' : 'absent'}">
-        ${status === 'present' ? '✓' : '✗'} ${emp.name}
-      </div>`;
-    }).join('');
-
-    return `<div class="history-item">
-      <div class="history-header" onclick="toggleHistory('sun-${dt}')">
-        <div class="history-date">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          ${formatDate(dt)}
-        </div>
-        <div class="history-badges">
-          <span class="badge badge-green">✓ ${coming} આવ્યા</span>
-          <span class="badge badge-red">✗ ${notComing} ન આવ્યા</span>
-          <button class="btn-icon" style="margin-left:8px" onclick="event.stopPropagation();deleteSundayRecord('${dt}')" title="Delete">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="history-body" id="hist-sun-${dt}">
-        <div class="history-body-grid">${empDetails}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function deleteSundayRecord(dt) {
-  showModal('Record Delete?', `${formatDate(dt)} ની Sunday record delete કરવી?`, () => {
-    delete state.sundayAttendance[dt];
-    saveState();
-    renderSundayHistory();
-    updateStats();
-    showToast('🗑️ Record delete થઈ');
-  });
-}
-
-// ─── OVERTIME ─────────────────────────────────────────────
-let otSelections = {}; // {empId: boolean}
-
-function loadOvertimeForDate() {
-  const date = document.getElementById('otDate')?.value;
-  if (!date) return;
-
-  const existing = state.overtimeRecords[date];
-  otSelections = existing ? { ...existing.employees } : {};
-
-  const hoursEl = document.getElementById('otHours');
-  const noteEl  = document.getElementById('otNote');
-  if (hoursEl) hoursEl.value = existing?.hours || '';
-  if (noteEl)  noteEl.value  = existing?.note  || '';
-
-  renderOvertimeGrid();
-}
-
-function renderOvertimeGrid() {
-  const container = document.getElementById('overtimeGrid');
-  const hoursSection = document.getElementById('otHoursSection');
-
-  if (state.employees.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="empty-icon">⏰</span>
-      <p>Employee ઉમેર્યા નથી</p>
-      <span>પ્રથમ "Employees" tab માં employees ઉમેરો</span></div>`;
-    if (hoursSection) hoursSection.style.display = 'none';
-    return;
-  }
-  if (hoursSection) hoursSection.style.display = 'flex';
-
-  container.innerHTML = state.employees.map(emp => {
-    const checked = otSelections[emp.id] || false;
-    return `
-    <div class="att-card ${checked ? 'ot-yes' : ''}" id="otCard-${emp.id}">
-      <div class="att-avatar">${getInitials(emp.name)}</div>
-      <div class="att-info">
-        <div class="att-name">${emp.name}</div>
-        <div class="att-dept">${emp.empId} &bull; ${emp.dept}</div>
-      </div>
-      <div class="att-toggle">
-        <button class="toggle-pill ${checked ? 'active-orange' : ''}" onclick="toggleOT('${emp.id}')">
-          ${checked ? '⏰ OT' : '+ OT'}
-        </button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleOT(empId) {
-  otSelections[empId] = !otSelections[empId];
-  const card = document.getElementById(`otCard-${empId}`);
-  const btn  = card.querySelector('.toggle-pill');
-  if (otSelections[empId]) {
-    card.classList.add('ot-yes');
-    btn.className = 'toggle-pill active-orange';
-    btn.textContent = '⏰ OT';
-  } else {
-    card.classList.remove('ot-yes');
-    btn.className = 'toggle-pill';
-    btn.textContent = '+ OT';
-  }
-}
-
-function markAllOT(val) {
-  state.employees.forEach(emp => {
-    otSelections[emp.id] = val;
-    const card = document.getElementById(`otCard-${emp.id}`);
-    const btn  = card?.querySelector('.toggle-pill');
-    if (!card) return;
-    if (val) {
-      card.classList.add('ot-yes');
-      btn.className = 'toggle-pill active-orange';
-      btn.textContent = '⏰ OT';
+    // Grand Footer updates (Total counts, Extra snacks/faral, Food orders)
+    if (currentMode === 'sunday') {
+        let footerText = `<div class="grand-total-text">${l.totalSun}: ${grandTotal}</div>`;
+        if (shiftTimeRecords[selectedDate]) {
+            footerText += `<div style="font-size: 0.95rem; font-weight: 700; margin-top: 8px; color: var(--text-light);">${l.shiftTimeText} ${shiftTimeRecords[selectedDate]}</div>`;
+        }
+        document.getElementById('r-total-text').innerHTML = footerText;
     } else {
-      card.classList.remove('ot-yes');
-      btn.className = 'toggle-pill';
-      btn.textContent = '+ OT';
+        let nastoGrand = totalNasto + currentExtra.nasto;
+        let faralGrand = totalFaral + currentExtra.faral;
+        document.getElementById('r-total-text').innerHTML = `
+            <div class="grand-total-text">${l.totalOt}: ${grandTotal}</div>
+            <div class="ot-food-breakdown">
+                <div class="food-row">
+                    <span>🍩 ${l.orderNasto}:</span>
+                    <span>${l.staff} ${totalNasto} + ${l.extra} ${currentExtra.nasto} = <strong>${nastoGrand}</strong></span>
+                </div>
+                <div class="food-row">
+                    <span>🥛 ${l.orderFaral}:</span>
+                    <span>${l.staff} ${totalFaral} + ${l.extra} ${currentExtra.faral} = <strong>${faralGrand}</strong></span>
+                </div>
+            </div>
+        `;
     }
-  });
 }
 
-function saveOvertime() {
-  const date  = document.getElementById('otDate').value;
-  const hours = document.getElementById('otHours').value;
-  const note  = document.getElementById('otNote').value.trim();
-
-  if (!date) { showToast('⚠️ Overtime date પસંદ કરો', 'error'); return; }
-  const hasAny = Object.values(otSelections).some(Boolean);
-  if (!hasAny) { showToast('⚠️ ઓછામાં ઓછો 1 employee select કરો', 'error'); return; }
-
-  state.overtimeRecords[date] = {
-    employees: { ...otSelections },
-    hours: hours ? parseFloat(hours) : null,
-    note,
-  };
-  saveState();
-  updateStats();
-  renderOTHistory();
-  generateReport();
-  showToast(`✅ Overtime (${formatDate(date)}) save થઈ`);
-}
-
-function renderOTHistory() {
-  const container = document.getElementById('otHistory');
-  const dates = Object.keys(state.overtimeRecords).sort().reverse();
-
-  if (dates.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span><p>કોઈ Overtime record નથી</p></div>`;
-    return;
-  }
-
-  container.innerHTML = dates.map(dt => {
-    const record = state.overtimeRecords[dt];
-    const otCount = Object.values(record.employees || {}).filter(Boolean).length;
-    const empDetails = state.employees.map(emp => {
-      if (!record.employees?.[emp.id]) return '';
-      return `<div class="hist-emp-pill ot">⏰ ${emp.name}</div>`;
-    }).join('');
-
-    return `<div class="history-item">
-      <div class="history-header" onclick="toggleHistory('ot-${dt}')">
-        <div class="history-date">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          ${formatDate(dt)}
-        </div>
-        <div class="history-badges">
-          <span class="badge badge-orange">⏰ ${otCount} Overtime</span>
-          ${record.hours ? `<span class="badge badge-orange">${record.hours} કલાક</span>` : ''}
-          ${record.note  ? `<span class="badge" style="background:rgba(99,179,237,0.1);color:#63b3ed;border:1px solid rgba(99,179,237,0.3)">${record.note}</span>` : ''}
-          <button class="btn-icon" style="margin-left:8px" onclick="event.stopPropagation();deleteOTRecord('${dt}')" title="Delete">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="history-body" id="hist-ot-${dt}">
-        ${record.note ? `<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px">📝 ${record.note}</p>` : ''}
-        <div class="history-body-grid">${empDetails}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function deleteOTRecord(dt) {
-  showModal('Record Delete?', `${formatDate(dt)} ની Overtime record delete કરવી?`, () => {
-    delete state.overtimeRecords[dt];
-    saveState();
-    renderOTHistory();
-    updateStats();
-    showToast('🗑️ Record delete થઈ');
-  });
-}
-
-// ─── History Toggle ───────────────────────────────────────
-function toggleHistory(id) {
-  const el = document.getElementById(`hist-${id}`);
-  if (!el) return;
-  el.classList.toggle('open');
-}
-
-// ─── REPORT ───────────────────────────────────────────────
-function generateReport() {
-  const monthVal = document.getElementById('reportMonth')?.value;
-  const reportDiv = document.getElementById('reportContent');
-  const empOtSummaryCard = document.getElementById('empOtSummaryCard');
-  const empOtSummaryDiv  = document.getElementById('empOtSummary');
-
-  if (!monthVal) return;
-
-  const [year, mon] = monthVal.split('-').map(Number);
-
-  // Filter Sunday records for month
-  const sunDates = Object.keys(state.sundayAttendance).filter(dt => {
-    const d = new Date(dt + 'T00:00:00');
-    return d.getFullYear() === year && d.getMonth()+1 === mon;
-  });
-
-  // Filter OT records for month
-  const otDates = Object.keys(state.overtimeRecords).filter(dt => {
-    const d = new Date(dt + 'T00:00:00');
-    return d.getFullYear() === year && d.getMonth()+1 === mon;
-  });
-
-  if (state.employees.length === 0) {
-    reportDiv.innerHTML = `<div class="empty-state"><span class="empty-icon">📊</span><p>Employee ઉમેર્યા નથી</p></div>`;
-    empOtSummaryCard.style.display = 'none';
-    return;
-  }
-
-  // Build per-employee summary
-  const empData = state.employees.map(emp => {
-    let sunPresent = 0, sunAbsent = 0;
-    sunDates.forEach(dt => {
-      const s = state.sundayAttendance[dt]?.[emp.id];
-      if (s === 'present') sunPresent++;
-      else if (s === 'absent') sunAbsent++;
-    });
-
-    let otDays = 0, totalOTHours = 0;
-    otDates.forEach(dt => {
-      const rec = state.overtimeRecords[dt];
-      if (rec?.employees?.[emp.id]) {
-        otDays++;
-        if (rec.hours) totalOTHours += rec.hours;
-      }
-    });
-
-    return { ...emp, sunPresent, sunAbsent, otDays, totalOTHours };
-  });
-
-  const monthNames = ['','જાન','ફેબ','માર','એપ્ર','મે','જૂન','જુલ','ઓગ','સપ્ટ','ઓક્ટ','નવ','ડિસ'];
-
-  reportDiv.innerHTML = `
-    <div style="margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap">
-      <span class="badge badge-green">📅 ${sunDates.length} Sundays</span>
-      <span class="badge badge-orange">⏰ ${otDates.length} Overtime Days</span>
-    </div>
-    <div style="overflow-x:auto">
-    <table class="report-table">
-      <thead>
-        <tr>
-          <th>Employee</th>
-          <th>ID</th>
-          <th>Department</th>
-          <th>Sun. આવ્યા</th>
-          <th>Sun. ન આવ્યા</th>
-          <th>OT Days</th>
-          <th>OT Hours</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${empData.map(e => `
-          <tr>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px">
-                <div class="emp-avatar" style="width:30px;height:30px;font-size:0.75rem;flex-shrink:0">${getInitials(e.name)}</div>
-                ${e.name}
-              </div>
-            </td>
-            <td style="color:var(--text-muted)">${e.empId}</td>
-            <td><span class="emp-badge">${e.dept}</span></td>
-            <td><span style="color:var(--green);font-weight:600">✓ ${e.sunPresent}</span></td>
-            <td><span style="color:var(--red);font-weight:600">✗ ${e.sunAbsent}</span></td>
-            <td><span style="color:var(--orange);font-weight:600">${e.otDays}</span></td>
-            <td><span style="color:var(--orange);font-weight:600">${e.totalOTHours > 0 ? e.totalOTHours + ' hr' : '—'}</span></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    </div>
-  `;
-
-  // OT detail by date
-  if (otDates.length > 0) {
-    empOtSummaryCard.style.display = 'block';
-    empOtSummaryDiv.innerHTML = `
-      <div style="overflow-x:auto">
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>OT Employees</th>
-            <th>Hours</th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${otDates.sort().map(dt => {
-            const rec = state.overtimeRecords[dt];
-            const names = state.employees.filter(e => rec.employees?.[e.id]).map(e => e.name).join(', ');
-            return `<tr>
-              <td style="white-space:nowrap">${formatDate(dt)}</td>
-              <td style="color:var(--text-secondary)">${names || '—'}</td>
-              <td style="color:var(--orange)">${rec.hours ? rec.hours + ' hr' : '—'}</td>
-              <td style="color:var(--text-muted)">${rec.note || '—'}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-      </div>
-    `;
-  } else {
-    empOtSummaryCard.style.display = 'none';
-  }
-}
-
-// ─── Export ───────────────────────────────────────────────
-function exportData() {
-  if (state.employees.length === 0) {
-    showToast('⚠️ Export કરવા માટે employees ઉમેરો', 'error');
-    return;
-  }
-
-  const monthEl = document.getElementById('reportMonth');
-  const monthVal = monthEl.value;
-  const [year, mon] = monthVal ? monthVal.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth()+1];
-  const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  let csv = `WorkTrack Pro - Attendance & Overtime Report\n`;
-  csv += `Month: ${monthNames[mon]} ${year}\n`;
-  csv += `Generated: ${new Date().toLocaleString()}\n\n`;
-
-  csv += `EMPLOYEES\n`;
-  csv += `Name,Employee ID,Department\n`;
-  state.employees.forEach(e => { csv += `"${e.name}","${e.empId}","${e.dept}"\n`; });
-
-  csv += `\nSUNDAY ATTENDANCE\n`;
-  csv += `Date,${state.employees.map(e => e.name).join(',')}\n`;
-  Object.keys(state.sundayAttendance).sort().forEach(dt => {
-    const rec = state.sundayAttendance[dt];
-    const row = state.employees.map(e => rec[e.id] || 'N/A').join(',');
-    csv += `"${dt}",${row}\n`;
-  });
-
-  csv += `\nOVERTIME RECORDS\n`;
-  csv += `Date,${state.employees.map(e => e.name).join(',')},Hours,Note\n`;
-  Object.keys(state.overtimeRecords).sort().forEach(dt => {
-    const rec = state.overtimeRecords[dt];
-    const row = state.employees.map(e => rec.employees?.[e.id] ? 'Yes' : 'No').join(',');
-    csv += `"${dt}",${row},"${rec.hours || ''}","${rec.note || ''}"\n`;
-  });
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `WorkTrack_${monthNames[mon]}_${year}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('📤 CSV Export started!', 'info');
-}
-
-// ─── Keyboard Shortcuts ───────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.activeElement.id === 'empName') addEmployee();
-  if (e.key === 'Escape') closeModal();
-});
-
-// --- Export: downloadBlob helper ---
-function downloadBlob(content, filename, mimeType) {
-  const blob = new Blob([content], { type: mimeType });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-// --- Export JSON Backup ---
-function exportJSONBackup() {
-  const backup = { version: '1.0', exportedAt: new Date().toISOString(), ...state };
-  const now = new Date();
-  const fname = 'WorkTrack_Backup_' + now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + '.json';
-  downloadBlob(JSON.stringify(backup, null, 2), fname, 'application/json');
-  showToast('Backup JSON download started!', 'info');
-}
-
-// --- Import Modal ---
-let parsedCSVRows = [];
-let parsedJSONBackup = null;
-
-function openImportModal() {
-  document.getElementById('importModal').style.display = 'flex';
-  switchImportTab('csv');
-  clearCSVPreview();
-  document.getElementById('jsonPreview').style.display = 'none';
-  document.getElementById('jsonFileInput').value = '';
-  parsedJSONBackup = null;
-}
-function closeImportModal() {
-  document.getElementById('importModal').style.display = 'none';
-  parsedCSVRows = [];
-  parsedJSONBackup = null;
-}
-
-function switchImportTab(tab) {
-  document.querySelectorAll('.import-tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.imp-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('impTab-' + tab).classList.add('active');
-  document.getElementById('impContent-' + tab).classList.add('active');
-}
-
-function downloadCSVTemplate() {
-  const t = 'Name,Employee ID,Department\nRahul Patel,EMP001,IT\nPriya Shah,EMP002,HR\nAmit Joshi,EMP003,Operations\n';
-  downloadBlob(t, 'WorkTrack_Employee_Template.csv', 'text/csv;charset=utf-8;');
-  showToast('Template download started!', 'info');
-}
-
-function handleCSVDrop(event) {
-  event.preventDefault();
-  document.getElementById('csvDropZone').classList.remove('drag-over');
-  const file = event.dataTransfer.files[0];
-  if (file && file.name.endsWith('.csv')) readCSVFile(file);
-  else showToast('Please upload a .csv file', 'error');
-}
-function handleCSVFile(event) { const f = event.target.files[0]; if (f) readCSVFile(f); }
-
-function readCSVFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => parseCSV(e.target.result, file.name);
-  reader.readAsText(file, 'UTF-8');
-}
-
-function parseCSVLine(line) {
-  const result = []; let current = ''; let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') { inQuotes = !inQuotes; }
-    else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
-    else { current += ch; }
-  }
-  result.push(current);
-  return result;
-}
-
-function parseCSV(text, filename) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) { showToast('CSV file is empty', 'error'); return; }
-  parsedCSVRows = [];
-  lines.slice(1).forEach((line, i) => {
-    const cols = parseCSVLine(line);
-    const name = cols[0] && cols[0].trim();
-    if (name) parsedCSVRows.push({ name, empId: (cols[1] && cols[1].trim()) || 'EMP' + String(i+1).padStart(3,'0'), dept: (cols[2] && cols[2].trim()) || 'Other' });
-  });
-  if (parsedCSVRows.length === 0) { showToast('No valid data in CSV', 'error'); return; }
-  showCSVPreview(filename);
-}
-
-function showCSVPreview(filename) {
-  const existingIds = new Set(state.employees.map(e => e.empId.toLowerCase()));
-  let newCount = 0, dupCount = 0;
-  parsedCSVRows.forEach(r => { if (existingIds.has(r.empId.toLowerCase())) dupCount++; else newCount++; });
-
-  document.getElementById('csvPreviewTitle').innerHTML =
-    filename + ' &middot; <span style="color:var(--green)">' + newCount + ' New</span>'
-    + (dupCount > 0 ? ' &middot; <span style="color:var(--orange)">' + dupCount + ' Duplicate (skip)</span>' : '');
-
-  const rows = parsedCSVRows.slice(0,20).map((r,i) => {
-    const isDup = existingIds.has(r.empId.toLowerCase());
-    return '<tr><td style="color:var(--text-muted)">' + (i+1) + '</td><td>' + r.name +
-      '</td><td style="color:var(--text-muted)">' + r.empId +
-      '</td><td><span class="emp-badge">' + r.dept + '</span></td><td>' +
-      (isDup ? '<span style="color:var(--orange);font-size:0.78rem">Duplicate</span>' : '<span style="color:var(--green);font-size:0.78rem">New</span>') + '</td></tr>';
-  }).join('');
-  const more = parsedCSVRows.length > 20 ? '<tr><td colspan="5" style="color:var(--text-muted);text-align:center">... and ' + (parsedCSVRows.length-20) + ' more</td></tr>' : '';
-
-  document.getElementById('csvPreviewTable').innerHTML =
-    '<table class="report-table" style="margin-top:4px"><thead><tr><th>#</th><th>Name</th><th>Employee ID</th><th>Department</th><th>Status</th></tr></thead><tbody>' + rows + more + '</tbody></table>';
-  document.getElementById('csvPreview').style.display = 'block';
-}
-
-function clearCSVPreview() {
-  parsedCSVRows = [];
-  document.getElementById('csvPreview').style.display = 'none';
-  document.getElementById('csvFileInput').value = '';
-}
-
-function importCSVData() {
-  if (parsedCSVRows.length === 0) { showToast('Please select a file', 'error'); return; }
-  const existingIds = new Set(state.employees.map(e => e.empId.toLowerCase()));
-  let added = 0;
-  parsedCSVRows.forEach(r => {
-    if (!existingIds.has(r.empId.toLowerCase())) {
-      state.employees.push({ id: uid(), name: r.name, empId: r.empId, dept: r.dept });
-      added++;
+// Window Loader & Initializers
+window.onload = function() {
+    initDate();
+    initTheme();
+    
+    // Retrieve shift time for the selected date
+    document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+    
+    // Select language from localstorage if saved
+    let savedLang = localStorage.getItem('officeLang');
+    if (savedLang) {
+        currentLang = savedLang;
     }
-  });
-  saveState(); renderAll(); updateStats();
-  closeImportModal();
-  showToast(added + ' employees imported successfully!');
-  switchTab('employees');
-}
+    
+    // Select mode from localstorage if saved
+    let savedMode = localStorage.getItem('officeMode');
+    if (savedMode) {
+        currentMode = savedMode;
+    }
 
-// --- JSON Backup Restore ---
-function handleJSONDrop(event) {
-  event.preventDefault();
-  document.getElementById('jsonDropZone').classList.remove('drag-over');
-  const file = event.dataTransfer.files[0];
-  if (file && file.name.endsWith('.json')) readJSONFile(file);
-  else showToast('Please upload a .json backup file', 'error');
-}
-function handleJSONFile(event) { const f = event.target.files[0]; if (f) readJSONFile(f); }
-
-function readJSONFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      parsedJSONBackup = JSON.parse(e.target.result);
-      if (!Array.isArray(parsedJSONBackup.employees)) throw new Error('Invalid format');
-      showJSONPreview(file.name);
-    } catch(err) { showToast('Invalid backup file format', 'error'); parsedJSONBackup = null; }
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-
-function showJSONPreview(filename) {
-  const b = parsedJSONBackup;
-  const sunCount = Object.keys(b.sundayAttendance || {}).length;
-  const otCount  = Object.keys(b.overtimeRecords  || {}).length;
-  const exported = b.exportedAt ? new Date(b.exportedAt).toLocaleString() : '-';
-  document.getElementById('jsonPreviewInfo').innerHTML =
-    '<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">File: ' + filename + '  |  Exported: ' + exported + '</p>' +
-    '<div class="json-info-grid">' +
-    '<div class="json-info-item"><div class="json-info-label">Employees</div><div class="json-info-value" style="color:var(--blue)">' + b.employees.length + '</div></div>' +
-    '<div class="json-info-item"><div class="json-info-label">Sunday Records</div><div class="json-info-value" style="color:var(--green)">' + sunCount + '</div></div>' +
-    '<div class="json-info-item"><div class="json-info-label">Overtime Records</div><div class="json-info-value" style="color:var(--orange)">' + otCount + '</div></div>' +
-    '<div class="json-info-item"><div class="json-info-label">Version</div><div class="json-info-value" style="color:var(--purple);font-size:1rem">' + (b.version||'N/A') + '</div></div>' +
-    '</div>' +
-    '<p style="font-size:0.78rem;color:var(--red);margin-top:8px">Warning: Restore will replace all current data</p>';
-  document.getElementById('jsonPreview').style.display = 'block';
-}
-
-function importJSONBackup() {
-  if (!parsedJSONBackup) { showToast('Please select a file', 'error'); return; }
-  state = {
-    employees:        parsedJSONBackup.employees        || [],
-    sundayAttendance: parsedJSONBackup.sundayAttendance || {},
-    overtimeRecords:  parsedJSONBackup.overtimeRecords  || {},
-  };
-  saveState(); renderAll(); updateStats();
-  closeImportModal();
-  showToast('Backup restored! ' + state.employees.length + ' employees loaded');
-}
+    updateLanguageUI();
+    
+    // Apply layout modes
+    switchMode(currentMode);
+    
+    // Hide inputs initially by locking edit mode
+    isUnlocked = true; // Set to true so toggleSecurityLock turns it to false and locks it properly
+    toggleSecurityLock();
+};
