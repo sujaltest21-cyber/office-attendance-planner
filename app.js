@@ -509,19 +509,16 @@ function toggleSecurityLock() {
     isUnlocked = !isUnlocked;
     const lockBtn = document.getElementById('main-lock-btn');
     const mainEditBtn = document.getElementById('main-edit-title-btn');
-    const addDeptContainer = document.getElementById('add-dept-container');
     const l = labels[currentLang];
 
     if (isUnlocked) {
         lockBtn.innerText = l.lockBtnUnlocked;
         lockBtn.classList.add('unlocked');
         mainEditBtn.style.display = 'inline-block';
-        addDeptContainer.style.display = 'flex';
     } else {
         lockBtn.innerText = l.lockBtnLocked;
         lockBtn.classList.remove('unlocked');
         mainEditBtn.style.display = 'none';
-        addDeptContainer.style.display = 'none';
     }
     renderAll(); 
 }
@@ -820,32 +817,30 @@ function renderAll() {
     }
 }
 
-// Window Loader & Initializers
-window.onload = function() {
-    initDate();
-    initTheme();
-    
-    // Retrieve shift time for the selected date
-    document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
-    
-    // Select language from localstorage if saved
-    let savedLang = localStorage.getItem('officeLang');
-    if (savedLang) {
-        currentLang = savedLang;
-    }
-    
-    // Select mode from localstorage if saved
-    let savedMode = localStorage.getItem('officeMode');
-    if (savedMode) {
-        currentMode = savedMode;
-    }
+// Initialization
+initDate();
+initTheme();
 
-    updateLanguageUI();
-    
-    // Apply layout modes
-    switchMode(currentMode);
-    
-    // Hide inputs initially by locking edit mode
-    isUnlocked = true; // Set to true so toggleSecurityLock turns it to false and locks it properly
-    toggleSecurityLock();
-};
+// Retrieve shift time for the selected date
+document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+
+// Select language from localstorage if saved
+let savedLang = localStorage.getItem('officeLang');
+if (savedLang) {
+    currentLang = savedLang;
+}
+
+// Select mode from localstorage if saved
+let savedMode = localStorage.getItem('officeMode');
+if (savedMode) {
+    currentMode = savedMode;
+}
+
+updateLanguageUI();
+
+// Apply layout modes
+switchMode(currentMode);
+
+// Hide inputs initially by locking edit mode
+isUnlocked = true; // Set to true so toggleSecurityLock turns it to false and locks it properly
+toggleSecurityLock();
