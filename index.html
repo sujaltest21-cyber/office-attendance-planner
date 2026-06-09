@@ -1113,6 +1113,13 @@
     document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
     document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
     switchMode('sunday');
+
+    // Auto-populate Firebase if database is empty (first load)
+    dbRef.child('masterData').once('value', (snap) => {
+        if (!snap.val()) {
+            saveAllToFirebase();
+        }
+    });
 </script>
 
 </body>
