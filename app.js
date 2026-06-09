@@ -35,8 +35,8 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
-
 let isFirebaseConnected = false;
+let hasInitialDataLoaded = false;
 
 // Firebase Connection State Listener
 firebase.database().ref('.info/connected').on('value', function(snap) {
@@ -52,9 +52,9 @@ firebase.database().ref('.info/connected').on('value', function(snap) {
         isFirebaseConnected = false;
     }
 });
-
 // Sync data from Firebase
 firebase.database().ref('/').on('value', (snapshot) => {
+    hasInitialDataLoaded = true;
     const data = snapshot.val();
     if (data) {
         officeNames = data.title || officeNames;
@@ -100,6 +100,10 @@ firebase.database().ref('/').on('value', (snapshot) => {
 });
 
 function saveToFirebase() {
+    if (!hasInitialDataLoaded) {
+        console.warn("Blocked save: Waiting for initial data sync from Firebase to prevent overwriting.");
+        return;
+    }
     database.ref('/').set({
         title: officeNames,
         master: masterData,
