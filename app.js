@@ -625,6 +625,8 @@ function downloadReportImage() {
 
 // Core Rendering UI
 function renderAll() {
+    let focusedElementId = document.activeElement ? document.activeElement.id : null;
+    
     const gridBox = document.getElementById('main-departments-grid');
     const reportGridBox = document.getElementById('report-grid-box');
     const filteredHorizontalBox = document.getElementById('filtered-horizontal-box');
@@ -735,13 +737,12 @@ function renderAll() {
         deptCard.innerHTML = cardHTML;
         gridBox.appendChild(deptCard);
 
-        // Append to Final Count Report Box if there is any attendance
-        if (deptPresentCount > 0) {
-            const reportItem = document.createElement('div');
-            reportItem.className = 'report-item';
-            reportItem.innerHTML = `${deptName}: <span>${deptPresentCount}</span>`;
-            reportGridBox.appendChild(reportItem);
-        }
+        // Append to Final Count Report Box always (even if count is 0)
+        let displayDeptName = deptName.replace(/^\d+\.?\s*/, '');
+        const reportItem = document.createElement('div');
+        reportItem.className = 'report-item';
+        reportItem.innerHTML = `${displayDeptName}: <span>${deptPresentCount}</span>`;
+        reportGridBox.appendChild(reportItem);
     });
 
     // Populate Present Staff List grouped by department
@@ -769,9 +770,10 @@ function renderAll() {
             let group = document.createElement('div');
             group.className = 'filtered-dept-group';
             
+            let displayDeptName = deptName.replace(/^\d+\.?\s*/, '');
             let header = document.createElement('div');
             header.className = 'filtered-dept-header';
-            header.innerText = deptName;
+            header.innerText = displayDeptName;
             group.appendChild(header);
 
             let list = document.createElement('ul');
@@ -814,6 +816,17 @@ function renderAll() {
                 </div>
             </div>
         `;
+    }
+    
+    // Restore focus if an input was active before re-render
+    if (focusedElementId) {
+        let el = document.getElementById(focusedElementId);
+        if (el && el.tagName === 'INPUT') {
+            el.focus();
+            let val = el.value;
+            el.value = '';
+            el.value = val;
+        }
     }
 }
 

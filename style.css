@@ -252,9 +252,14 @@ header p {
     border-radius: 9999px;
     cursor: pointer;
     background: transparent;
-    text-align: center;
     color: var(--text-light);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .mode-btn.active-sunday {
@@ -643,7 +648,7 @@ body.dark-theme .add-dept-form button {
 .filtered-emp-row {
     font-size: 0.8rem;
     font-weight: 600;
-    padding: 2px 0;
+    padding: 6px 0;
     border-bottom: 1px dashed var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -825,23 +830,10 @@ body.dark-theme .backup-btn.import-btn {
     box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
 }
 
-/* Department Card Layout Grid */
 .departments-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 14px;
-}
-
-@media (min-width: 600px) {
-    .departments-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 992px) {
-    .departments-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
 }
 
 .dept-card {
@@ -957,7 +949,7 @@ body.dark-theme .backup-btn.import-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 0;
+    padding: 8px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
