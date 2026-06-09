@@ -362,6 +362,47 @@
         .sunday-theme .main-download-btn { background-color: var(--sunday-color); } 
         .ot-theme .main-download-btn { background-color: var(--ot-color); } 
         
+        .main-save-btn {
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+            justify-content: center;
+            font-size: 1.05rem;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            background-color: #10b981; /* Emerald Green */
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+        .main-save-btn:hover {
+            background-color: #059669;
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+            transform: translateY(-1px);
+        }
+        .main-save-btn:active {
+            transform: translateY(1px);
+        }
+        .main-save-btn.unsaved {
+            background-color: #ef4444 !important; /* Warning Red */
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+            animation: pulse-unsaved 1.5s infinite;
+        }
+        .main-save-btn.unsaved:hover {
+            background-color: #dc2626 !important;
+        }
+        @keyframes pulse-unsaved {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+            50% { transform: scale(1.02); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+        } 
+        
         .departments-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } 
         @media (min-width: 600px) { .departments-grid { grid-template-columns: repeat(2, 1fr); } } 
         @media (min-width: 900px) { .departments-grid { grid-template-columns: repeat(3, 1fr); } } 
@@ -478,6 +519,10 @@
         <button class="main-download-btn" onclick="downloadReportImage()">
             📸 <span id="label-download-btn">ડાઉનલોડ રીપોર્ટ (Image)</span>
         </button>
+        
+        <button id="main-save-cloud-btn" class="main-save-btn" onclick="pushAllToFirebase()">
+            <span id="label-save-btn">💾 ડેટાબેઝમાં સેવ કરો</span>
+        </button>
     </div>
 
     <div class="departments-grid" id="main-departments-grid"></div>
@@ -509,26 +554,102 @@
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref();
 
-    function saveMasterData() { dbRef.child('masterData').set(JSON.stringify(masterData)); }
-    function saveAttendanceRecords() { dbRef.child('attendanceRecords').set(JSON.stringify(attendanceRecords)); }
-    function saveExtraFoodRecords() { dbRef.child('extraFoodRecords').set(JSON.stringify(extraFoodRecords)); }
-    function saveShiftTimeRecords() { dbRef.child('shiftTimeRecords').set(JSON.stringify(shiftTimeRecords)); }
-    function saveOfficeNames() { dbRef.child('officeNames').set(JSON.stringify(officeNames)); }
-    function saveAllToFirebase() { saveMasterData(); saveAttendanceRecords(); saveExtraFoodRecords(); saveShiftTimeRecords(); saveOfficeNames(); }
+    let hasUnsavedChanges = false;
+
+    function updateSaveButtonState() {
+        const saveBtn = document.getElementById('main-save-cloud-btn');
+        const labelSaveBtn = document.getElementById('label-save-btn');
+        if (!saveBtn || !labelSaveBtn) return;
+
+        if (hasUnsavedChanges) {
+            saveBtn.classList.add('unsaved');
+            labelSaveBtn.innerText = currentLang === 'gu' ? "💾 સેવ કરો (નવા ફેરફાર છે)" : "💾 Save Changes (Unsaved)";
+        } else {
+            saveBtn.classList.remove('unsaved');
+            labelSaveBtn.innerText = currentLang === 'gu' ? "💾 ડેટાબેઝમાં સેવ કરો" : "💾 Save to Database";
+        }
+    }
+
+    function markAsUnsaved() {
+        hasUnsavedChanges = true;
+        updateSaveButtonState();
+    }
+
+    function saveMasterData() {
+        localStorage.setItem('officeMasterStructure', JSON.stringify(masterData));
+        markAsUnsaved();
+    }
+    function saveAttendanceRecords() {
+        localStorage.setItem('officeDateWiseRecords', JSON.stringify(attendanceRecords));
+        markAsUnsaved();
+    }
+    function saveExtraFoodRecords() {
+        localStorage.setItem('officeDateWiseExtraFood', JSON.stringify(extraFoodRecords));
+        markAsUnsaved();
+    }
+    function saveShiftTimeRecords() {
+        localStorage.setItem('officeDateWiseShiftTime', JSON.stringify(shiftTimeRecords));
+        markAsUnsaved();
+    }
+    function saveOfficeNames() {
+        localStorage.setItem('officeCustomTitle', JSON.stringify(officeNames));
+        markAsUnsaved();
+    }
+    function saveAllToFirebase() {
+        saveMasterData();
+        saveAttendanceRecords();
+        saveExtraFoodRecords();
+        saveShiftTimeRecords();
+        saveOfficeNames();
+    }
+
+    function pushAllToFirebase() {
+        hasUnsavedChanges = false;
+        updateSaveButtonState();
+
+        const labelSaveBtn = document.getElementById('label-save-btn');
+        if (labelSaveBtn) {
+            labelSaveBtn.innerText = currentLang === 'gu' ? "⏳ સેવ થઈ રહ્યું છે..." : "⏳ Saving...";
+        }
+
+        Promise.all([
+            dbRef.child('masterData').set(JSON.stringify(masterData)),
+            dbRef.child('attendanceRecords').set(JSON.stringify(attendanceRecords)),
+            dbRef.child('extraFoodRecords').set(JSON.stringify(extraFoodRecords)),
+            dbRef.child('shiftTimeRecords').set(JSON.stringify(shiftTimeRecords)),
+            dbRef.child('officeNames').set(JSON.stringify(officeNames))
+        ]).then(() => {
+            if (labelSaveBtn) {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "✅ સફળતાપૂર્વક સેવ થઈ ગયું!" : "✅ Saved Successfully!";
+            }
+            setTimeout(() => {
+                updateSaveButtonState();
+            }, 2000);
+        }).catch(err => {
+            console.error("Error saving data to Firebase:", err);
+            alert(currentLang === 'gu' ? "ભૂલ: ડેટા સેવ કરવામાં નિષ્ફળતા મળી!" : "Error: Failed to save data!");
+            hasUnsavedChanges = true;
+            updateSaveButtonState();
+        });
+    }
 
     dbRef.child('masterData').on('value', (snap) => {
+        if (hasUnsavedChanges) return;
         if (snap.val()) masterData = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('attendanceRecords').on('value', (snap) => {
+        if (hasUnsavedChanges) return;
         if (snap.val()) attendanceRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('extraFoodRecords').on('value', (snap) => {
+        if (hasUnsavedChanges) return;
         if (snap.val()) extraFoodRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('shiftTimeRecords').on('value', (snap) => {
+        if (hasUnsavedChanges) return;
         if (snap.val()) shiftTimeRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') {
             document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
@@ -536,6 +657,7 @@
         }
     });
     dbRef.child('officeNames').on('value', (snap) => {
+        if (hasUnsavedChanges) return;
         if (snap.val()) officeNames = JSON.parse(snap.val());
         if (typeof renderAll === 'function') {
             document.getElementById('main-title').innerText = officeNames[currentLang];
@@ -776,6 +898,7 @@
         document.getElementById('label-download-btn').innerText = labels[currentLang].dlBtn;
         document.getElementById('label-shift-time').innerText = labels[currentLang].shiftTimeText;
         document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
+        updateSaveButtonState();
         switchMode(currentMode);
     }
 
@@ -1117,7 +1240,7 @@
     // Auto-populate Firebase if database is empty (first load)
     dbRef.child('masterData').once('value', (snap) => {
         if (!snap.val()) {
-            saveAllToFirebase();
+            pushAllToFirebase();
         }
     });
 </script>
