@@ -752,7 +752,7 @@ function renderAll() {
         // Append to Final Count Report Box always (even if count is 0)
         const reportItem = document.createElement('div');
         reportItem.className = 'report-item';
-        reportItem.innerHTML = `${deptName}: <span>${deptPresentCount}</span>`;
+        reportItem.innerHTML = `${deptName} <span>${deptPresentCount}</span>`;
         reportGridBox.appendChild(reportItem);
     });
 
@@ -767,12 +767,22 @@ function renderAll() {
             let isFaral = getStatus(deptName, empName, 'faral');
             let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
 
-            if (currentMode === 'sunday' && isSun) {
-                activeEmps.push({ name: empName, badgeClass: 'badge-yes', badgeText: 'Yes' });
+            if (currentMode === 'sunday') {
+                if (isSun) {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-yes', badgeText: 'Yes' });
+                } else {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-no', badgeText: 'No' });
+                }
             } else if (currentMode === 'ot') {
-                if (isNasto) activeEmps.push({ name: empName, badgeClass: 'badge-nasto', badgeText: l.nBadge });
-                else if (isFaral) activeEmps.push({ name: empName, badgeClass: 'badge-faral', badgeText: l.fBadge });
-                else if (isOnlyOt) activeEmps.push({ name: empName, badgeClass: 'badge-only-ot', badgeText: 'OT' });
+                if (isNasto) {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-nasto', badgeText: l.nBadge });
+                } else if (isFaral) {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-faral', badgeText: l.fBadge });
+                } else if (isOnlyOt) {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-only-ot', badgeText: 'OT' });
+                } else {
+                    activeEmps.push({ name: empName, badgeClass: 'badge-no', badgeText: 'No' });
+                }
             }
         });
 
@@ -787,10 +797,10 @@ function renderAll() {
 
             let list = document.createElement('ul');
             list.className = 'filtered-vertical-list';
-            activeEmps.forEach((emp) => {
+            activeEmps.forEach((emp, empIdx) => {
                 let row = document.createElement('li');
                 row.className = 'filtered-emp-row';
-                row.innerHTML = `<span>${emp.name}</span> <span class="food-badge ${emp.badgeClass}">${emp.badgeText}</span>`;
+                row.innerHTML = `<span>${empIdx + 1}. ${emp.name}</span> <span class="food-badge ${emp.badgeClass}">${emp.badgeText}</span>`;
                 list.appendChild(row);
             });
             group.appendChild(list);
