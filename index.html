@@ -3,130 +3,1117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર - ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ | Office Sunday & Overtime Planner for seamless attendance tracking.">
-    <title>ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર | Office Sunday & Overtime Planner</title>
-    
-    <!-- Google Fonts: Outfit (English) & Noto Sans Gujarati (Gujarati) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- html2canvas for capturing premium reports as images -->
+    <title>ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --sunday-color: #ef4444;
+            --sunday-bg: #fee2e2;
+            --ot-color: #10b981;
+            --ot-bg: #d1fae5;
+            --faral-color: #f59e0b;
+            --faral-bg: #fef3c7;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --blue-color: #3b82f6;
+            --blue-bg: #dbeafe;
+            --panel-muted: #f8fafc;
+            --dept-header-bg: #e2e8f0;
+        }
+
+        /* Dark Mode Theme Variables */
+        body.dark-theme {
+            --primary-color: #f8fafc;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #cbd5e1;
+            --text-light: #94a3b8;
+            --border-color: #334155;
+            --panel-muted: #1e293b;
+            --dept-header-bg: #334155;
+            --sunday-bg: #451a1a;
+            --ot-bg: #064e3b;
+            --faral-bg: #451a03;
+            --blue-bg: #172554;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 16px;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .edit-title-btn, .edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.5;
+            padding: 2px 6px;
+            transition: opacity 0.2s;
+            display: none;
+        }
+        .edit-title-btn:hover, .edit-btn:hover { opacity: 1; }
+
+        header p {
+            color: var(--text-light);
+            margin: 4px 0 0 0;
+            font-size: 0.95rem;
+        }
+
+        .theme-switcher-wrapper {
+            margin-top: 10px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .theme-switcher-wrapper { position: absolute; top: 0; right: 0; margin-top: 0; }
+        }
+
+        .lang-btn, .theme-btn, .lock-btn, .erase-btn, .backup-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .lock-btn.unlocked {
+            background-color: #fef2f2;
+            color: var(--sunday-color);
+            border-color: var(--sunday-color);
+        }
+        body.dark-theme .lock-btn.unlocked {
+            background-color: #451a1a;
+        }
+        
+        .erase-btn {
+            background-color: #fff7ed;
+            color: #ea580c;
+            border-color: #fdba74;
+        }
+        .erase-btn:hover { background-color: #ffedd5; }
+        body.dark-theme .erase-btn { background-color: #431407; color: #ff9770; border-color: #9a3412; }
+        body.dark-theme .erase-btn:hover { background-color: #7c2d12; }
+        
+        .backup-btn.export-btn { background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        body.dark-theme .backup-btn.export-btn { background-color: #064e3b; color: #4ade80; border-color: #14532d; }
+        
+        .backup-btn.import-btn { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        body.dark-theme .backup-btn.import-btn { background-color: #172554; color: #60a5fa; border-color: #1e3a8a; }
+
+        .controls-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) {
+            .controls-row { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+
+        .left-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .left-controls { flex-direction: row; align-items: center; width: auto; }
+        }
+
+        .date-input-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            background: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            gap: 8px;
+        }
+
+        .date-input-wrapper input {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            color: var(--text-main);
+            background: var(--card-bg);
+        }
+
+        .mode-switcher-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .mode-switcher {
+            display: flex;
+            background: var(--bg-color);
+            padding: 4px;
+            border-radius: 9999px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) { .mode-switcher { width: 250px; } }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            background: transparent;
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .mode-btn.active-sunday { background-color: var(--card-bg); color: var(--sunday-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .mode-btn.active-ot { background-color: var(--card-bg); color: var(--ot-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .shift-time-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .shift-time-wrapper label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--sunday-color);
+        }
+        .shift-time-wrapper input {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+            color: var(--text-main);
+            background: var(--card-bg);
+            width: 140px;
+        }
+
+        .add-dept-form {
+            display: flex;
+            background: var(--bg-color);
+            padding: 4px 4px 4px 14px;
+            border-radius: 9999px;
+            border: 1px solid var(--border-color);
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) { .add-dept-form { width: 280px; } }
+
+        .add-dept-form input {
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+            flex: 1;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .add-dept-form button {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.85rem; white-space: nowrap; 
+            cursor: pointer;
+        } 
+        body.dark-theme .add-dept-form button { color: #0f172a; background-color: #f8fafc; }
+        
+        /* Capture Area Header Styling */
+        .capture-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .capture-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .capture-header p {
+            margin: 6px 0 0 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .capture-mode-active .capture-header {
+            display: block !important;
+        }
+
+        .download-capture-area { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
+        .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } 
+        @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } } 
+        .panel-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } 
+        .panel-title { margin: 0 0 14px 0; font-size: 1.05rem; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; } 
+        .report-grid { display: grid; grid-template-columns: 1fr; gap: 8px; } 
+        @media (min-width: 480px) { .report-grid { grid-template-columns: repeat(2, 1fr); } } 
+        .report-item { padding: 10px 14px; background: var(--panel-muted); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; border: 1px solid var(--border-color); } 
+        .report-item span { font-weight: 700; color: var(--primary-color); } 
+        .extra-container { grid-column: 1 / -1; background: var(--panel-muted); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; } 
+        .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; } 
+        .extra-btn { background: var(--card-bg); border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; } 
+        .extra-val { font-size: 0.95rem; font-weight: 700; min-width: 14px; text-align: center; } 
+        .grand-footer { text-align: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border-color); } 
+        .sunday-theme .grand-total-text { color: var(--sunday-color); font-size: 1.1rem; font-weight: 800; } 
+        .ot-theme .grand-total-text { color: var(--ot-color); font-size: 1.1rem; font-weight: 800; } 
+        .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: var(--panel-muted); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); } 
+        .food-row { display: flex; justify-content: space-between; align-items: center; } 
+        
+        .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } 
+        @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } 
+        .capture-mode-active .filtered-horizontal-grid { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
+
+        .filtered-dept-group { background: var(--panel-muted); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
+        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: var(--dept-header-bg); } 
+        .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); } 
+        .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); } 
+        .filtered-vertical-list { padding: 0; margin: 0; list-style: none; } 
+        .filtered-emp-row { font-size: 0.85rem; padding: 5px 2px; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; } 
+        .filtered-emp-row:last-child { border-bottom: none; } 
+        
+        .food-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; } 
+        .badge-yes { background-color: #d1fae5; color: #10b981; border: 1px solid #10b981; } 
+        body.dark-theme .badge-yes { background-color: #064e3b; color: #34d399; }
+        .badge-nasto { background-color: #d1fae5; color: #10b981; } 
+        body.dark-theme .badge-nasto { background-color: #064e3b; color: #34d399; }
+        .badge-faral { background-color: #fef3c7; color: #f59e0b; } 
+        body.dark-theme .badge-faral { background-color: #451a03; color: #fbbf24; }
+        .badge-only-ot { background-color: var(--blue-bg); color: var(--blue-color); border: 1px solid var(--blue-color); } 
+        body.dark-theme .badge-only-ot { color: #60a5fa; }
+        .badge-no { background-color: #fee2e2; color: #ef4444; border: 1px solid #ef4444; opacity: 0.75; } 
+        body.dark-theme .badge-no { background-color: #451a1a; color: #f87171; }
+        
+        .download-action-container { text-align: center; margin: 15px 0 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; } 
+        .main-download-btn { width: 100%; max-width: 320px; box-sizing: border-box; justify-content: center; font-size: 1.05rem; padding: 12px; border: none; border-radius: 25px; cursor: pointer; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; } 
+        .sunday-theme .main-download-btn { background-color: var(--sunday-color); } 
+        .ot-theme .main-download-btn { background-color: var(--ot-color); } 
+        
+        .departments-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } 
+        @media (min-width: 600px) { .departments-grid { grid-template-columns: repeat(2, 1fr); } } 
+        @media (min-width: 900px) { .departments-grid { grid-template-columns: repeat(3, 1fr); } } 
+        .dept-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } 
+        .dept-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; } 
+        .title-container { display: flex; align-items: center; gap: 4px; } 
+        .dept-title { font-size: 1rem; color: var(--primary-color); margin: 0; font-weight: 700; } 
+        .delete-dept-btn { background: transparent; border: none; color: var(--sunday-color); font-size: 1.1rem; cursor: pointer; display: none; } 
+        .add-emp-form { display: flex; gap: 4px; margin-bottom: 12px; } 
+        .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: var(--bg-color); color: var(--text-main); } 
+        .add-emp-form button { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; } 
+        .emp-list { list-style: none; padding: 0; margin: 0; } 
+        .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--border-color); } 
+        .emp-item:last-child { border-bottom: none; } 
+        .name-container { display: flex; align-items: center; gap: 4px; } 
+        .emp-name { font-weight: 500; font-size: 0.9rem; } 
+        .btn-group { display: flex; gap: 4px; } 
+        .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: var(--card-bg); color: var(--text-main); cursor: pointer; } 
+        
+        .sunday-theme .btn-present { background-color: var(--sunday-bg); color: var(--sunday-color); border-color: var(--sunday-color); } 
+        .sunday-theme .btn-absent { background-color: var(--bg-color); color: var(--text-light); } 
+        
+        .ot-theme .btn-nasto-active { background-color: var(--ot-bg); color: var(--ot-color); border-color: var(--ot-color); } 
+        .ot-theme .btn-faral-active { background-color: var(--faral-bg); color: var(--faral-color); border-color: var(--faral-color); } 
+        .ot-theme .btn-only-ot-active { background-color: var(--blue-bg); color: var(--blue-color); border-color: var(--blue-color); } 
+        .ot-theme .btn-inactive { background-color: var(--bg-color); color: var(--text-light); } 
+        
+        .delete-btn { background: none; border: none; color: var(--sunday-color); font-size: 1.1rem; padding: 2px 4px; cursor: pointer; display: none; } 
+        .no-active-msg, .no-dept-msg { color: var(--text-light); font-size: 0.85rem; font-style: italic; text-align: center; width: 100%; padding: 15px 0; grid-column: 1/-1; } 
+    </style>
 </head>
 <body class="sunday-theme">
-    <div class="container">
-        <!-- Header Section -->
-        <header>
-            <div class="title-wrapper">
-                <h1 id="main-title">📊 ઓફિસ એટેન્ડન્સ પ્લાનર</h1>
-                <button id="main-edit-title-btn" class="edit-title-btn" onclick="editMainTitle()" title="Edit Company Name" aria-label="Edit Company Name">✏️</button>
-            </div>
-            <p id="main-sub">ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ</p>
-            <div id="connection-status" style="margin-top: 8px; font-weight: 600; font-size: 0.9rem; color: #64748b; padding: 4px 12px; background: var(--panel-muted); border-radius: 20px; display: inline-block;">🟡 Connecting...</div>
-            
-            <div class="theme-switcher-wrapper">
-                <button id="btn-toggle-lang" class="lang-btn" onclick="toggleLanguage()" aria-label="Switch Language">🌐 English / ગુજરાતી</button>
-                <button id="btn-toggle-theme" class="theme-btn" onclick="toggleTheme()" aria-label="Toggle Theme">🌓 Dark / Light</button>
-            </div>
-        </header>
 
-        <!-- Controls & Customizations Row -->
-        <section class="controls-row" aria-label="Planner Controls">
-            <div class="left-controls">
-                <div class="date-input-wrapper">
-                    <span id="label-date">📅 તારીખ:</span>
-                    <input type="date" id="attendance-date" onchange="onDateChange()" aria-label="Select Date">
+<div class="container">
+    <header>
+        <div class="title-wrapper">
+            <h1 id="main-title">📊 ઓફિસ એટેન્ડન્સ પ્લાનર</h1>
+            <button id="main-edit-title-btn" class="edit-title-btn" onclick="editMainTitle()">✏️</button>
+        </div>
+        <p id="main-sub">ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ</p>
+        
+        <div class="theme-switcher-wrapper">
+            <button class="lang-btn" onclick="toggleLanguage()">🌐 English / ગુજરાતી</button>
+            <button class="theme-btn" onclick="toggleTheme()">🌓 Dark / Light</button>
+        </div>
+    </header>
+
+    <div class="controls-row">
+        <div class="left-controls">
+            <div class="date-input-wrapper">
+                <span id="label-date">📅 તારીખ:</span>
+                <input type="date" id="attendance-date" onchange="onDateChange()">
+            </div>
+            <div class="mode-switcher-container">
+                <div class="mode-switcher">
+                    <button id="btn-sunday" class="mode-btn active-sunday" onclick="switchMode('sunday')">☀️ Sunday</button>
+                    <button id="btn-ot" class="mode-btn" onclick="switchMode('ot')">⏱️ Overtime</button>
                 </div>
-                <div class="mode-switcher-container">
-                    <div class="mode-switcher" role="group" aria-label="Select Mode">
-                        <button id="btn-sunday" class="mode-btn active-sunday" onclick="switchMode('sunday')">☀️ Sunday</button>
-                        <button id="btn-ot" class="mode-btn" onclick="switchMode('ot')">⏱️ Overtime</button>
-                    </div>
-                    <div id="shift-time-box" class="shift-time-wrapper">
-                        <label id="label-shift-time" for="shift-time-input">⏰ Shift Time:</label>
-                        <input type="text" id="shift-time-input" placeholder="09:00 AM To 05:00 PM" onchange="onShiftTimeChange()">
-                    </div>
+                <div id="shift-time-box" class="shift-time-wrapper">
+                    <label id="label-shift-time">⏰ Shift Time:</label>
+                    <input type="text" id="shift-time-input" placeholder="09:00 AM To 05:00 PM" onchange="onShiftTimeChange()">
                 </div>
             </div>
-            <div class="add-dept-form" id="add-dept-container">
-                <input type="text" id="new-dept-name" placeholder="નવો વિભાગ ઉમેરો..." onkeypress="handleDeptKeyPress(event)" aria-label="New Department Name">
-                <button id="add-dept-btn" onclick="addDepartment()">+ વિભાગ</button>
-            </div>
-        </section>
-
-        <!-- Capture Area (Final Report Summary Box) -->
-        <main class="download-capture-area" id="capture-zone">
-            <!-- Header visible only when generating PNG -->
-            <div class="capture-header" id="image-capture-header">
-                <h2 id="cap-office-title">Office Attendance Planner</h2>
-                <p id="cap-date-details">09/06/2026 (Tuesday) | Mode: Sunday</p>
-            </div>
-
-            <div class="summary-wrapper">
-                <!-- Panel 1: Final Count Report -->
-                <article class="panel-card" id="panel-report">
-                    <h2 class="panel-title" id="report-header">📋 ફાઇનલ કાઉન્ટ રીપોર્ટ</h2>
-                    <div class="report-grid" id="report-grid-box"></div>
-                    
-                    <!-- Extra Snacks Counters for Overtime Mode -->
-                    <div id="extra-food-box" class="extra-container" style="display: none;">
-                        <div class="extra-control">
-                            <span id="label-ext-nasto">🍩 એક્સ્ટ્રા નાસ્તો:</span>
-                            <div class="counter-actions">
-                                <button class="extra-btn" onclick="changeExtra('nasto', -1)" aria-label="Decrease snacks">-</button>
-                                <span class="extra-val" id="ext-nasto-val">0</span>
-                                <button class="extra-btn" onclick="changeExtra('nasto', 1)" aria-label="Increase snacks">+</button>
-                            </div>
-                        </div>
-                        <div class="extra-control">
-                            <span id="label-ext-faral">🥛 એક્સ્ટ્રા ફરાળ:</span>
-                            <div class="counter-actions">
-                                <button class="extra-btn" onclick="changeExtra('faral', -1)" aria-label="Decrease faral">-</button>
-                                <span class="extra-val" id="ext-faral-val">0</span>
-                                <button class="extra-btn" onclick="changeExtra('faral', 1)" aria-label="Increase faral">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grand-footer" id="r-total-text"></div>
-                </article>
-
-                <!-- Panel 2: Present Staff List -->
-                <article class="panel-card" id="panel-staff">
-                    <h2 class="panel-title" id="filtered-header">👤 હાજર સ્ટાફની યાદી</h2>
-                    <div class="filtered-horizontal-grid" id="filtered-horizontal-box"></div>
-                </article>
-            </div>
-        </main>
-
-        <!-- Backup and Tool Actions Row -->
-        <section class="download-action-container" aria-label="Data Backup & Action Panel">
-            <div class="utility-buttons">
-                <button id="main-lock-btn" class="lock-btn" onclick="toggleSecurityLock()">🔒 Lock (Safe Mode)</button>
-                <button id="main-erase-btn" class="erase-btn" onclick="eraseAllAttendance()">🧹 Erase All</button>
-                <button id="main-export-btn" class="backup-btn export-btn" onclick="exportBackupData()">📥 Export Backup</button>
-                <button id="main-import-btn" class="backup-btn import-btn" onclick="triggerImportClick()">📤 Import Backup</button>
-                <input type="file" id="hidden-file-input" accept=".txt" style="display: none;" onchange="importBackupData(event)" aria-label="Select Backup File">
-            </div>
-            
-            <button id="btn-download-report" class="main-download-btn" onclick="downloadReportImage()">
-                📸 <span id="label-download-btn">ડાઉનલોડ રીપોર્ટ (Image)</span>
-            </button>
-        </section>
-
-        <!-- Department Details Grid -->
-        <section id="main-departments-grid" class="departments-grid" aria-label="Departments Management"></section>
+        </div>
+        <div class="add-dept-form" id="add-dept-container">
+            <input type="text" id="new-dept-name" placeholder="નવો વિભાગ ઉમેરો..." onkeypress="handleDeptKeyPress(event)">
+            <button id="add-dept-btn" onclick="addDepartment()">+ વિભાગ</button>
+        </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <div class="download-capture-area" id="capture-zone">
+        <div class="capture-header" id="image-capture-header">
+            <h2 id="cap-office-title">Polish Assort</h2>
+            <p id="cap-date-details">05/06/2026 (શુક્રવાર (Friday)) | પ્રકાર: OT</p>
+        </div>
 
-    <!-- Core App Logic -->
-    <script defer src="app.js"></script>
+        <div class="summary-wrapper">
+            <div class="panel-card">
+                <div class="panel-title" id="report-header">📋 ફાઇનલ કાઉન્ટ રીપોર્ટ</div>
+                <div class="report-grid" id="report-grid-box"></div>
+                
+                <div id="extra-food-box" class="extra-container" style="display: none;">
+                    <div class="extra-control">
+                        <span id="label-ext-nasto">🍩 એક્સ્ટ્રા નાસ્તો:</span>
+                        <button class="extra-btn" onclick="changeExtra('nasto', -1)">-</button>
+                        <span class="extra-val" id="ext-nasto-val">0</span>
+                        <button class="extra-btn" onclick="changeExtra('nasto', 1)">+</button>
+                    </div>
+                    <div class="extra-control">
+                        <span id="label-ext-faral">🥛 એક્સ્ટ્રા ફરાળ:</span>
+                        <button class="extra-btn" onclick="changeExtra('faral', -1)">-</button>
+                        <span class="extra-val" id="ext-faral-val">0</span>
+                        <button class="extra-btn" onclick="changeExtra('faral', 1)">+</button>
+                    </div>
+                </div>
+                <div class="grand-footer" id="r-total-text"></div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title" id="filtered-header">👤 હાજર સ્ટાફની યાદી</div>
+                <div class="filtered-horizontal-grid" id="filtered-horizontal-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="download-action-container">
+        <button id="main-lock-btn" class="lock-btn" onclick="toggleSecurityLock()">🔒 Lock (Safe Mode)</button>
+        <button id="main-erase-btn" class="erase-btn" onclick="eraseAllAttendance()">🧹 Erase All</button>
+        
+        <button id="main-export-btn" class="backup-btn export-btn" onclick="exportBackupData()">📥 Export Backup</button>
+        <button id="main-import-btn" class="backup-btn import-btn" onclick="triggerImportClick()">📤 Import Backup</button>
+        <input type="file" id="hidden-file-input" accept=".txt" style="display: none;" onchange="importBackupData(event)">
+        
+        <button class="main-download-btn" onclick="downloadReportImage()">
+            📸 <span id="label-download-btn">ડાઉનલોડ રીપોર્ટ (Image)</span>
+        </button>
+    </div>
+
+    <div class="departments-grid" id="main-departments-grid"></div>
+</div>
+
+<script>
+    let currentLang = 'gu';
+    let currentMode = 'sunday';
+    let selectedDate = '';
+    let isUnlocked = false; 
+
+    let officeNames = JSON.parse(localStorage.getItem('officeCustomTitle')) || {
+        gu: "📊 ઓફિસ એટેન્ડન્સ પ્લાનર", en: "📊 Office Attendance Planner"
+    };
+
+    let masterData = JSON.parse(localStorage.getItem('officeMasterStructure')) || {
+        "1. P2P અંકિતભાઈ": [],
+        "2. ગાલા સુરેશભાઈ": [],
+        "3. ફાઇનલ હરેશભાઈ": [],
+        "4. ફાઇનલ અરવિંદભાઈ": []
+    };
+
+    let attendanceRecords = JSON.parse(localStorage.getItem('officeDateWiseRecords')) || {};
+    let extraFoodRecords = JSON.parse(localStorage.getItem('officeDateWiseExtraFood')) || {};
+    let shiftTimeRecords = JSON.parse(localStorage.getItem('officeDateWiseShiftTime')) || {};
+
+    // ═══════════ Firebase Real-time Database ═══════════
+    const firebaseConfig = { databaseURL: "https://office-attendance-a7d98-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref();
+
+    function saveMasterData() { dbRef.child('masterData').set(JSON.stringify(masterData)); }
+    function saveAttendanceRecords() { dbRef.child('attendanceRecords').set(JSON.stringify(attendanceRecords)); }
+    function saveExtraFoodRecords() { dbRef.child('extraFoodRecords').set(JSON.stringify(extraFoodRecords)); }
+    function saveShiftTimeRecords() { dbRef.child('shiftTimeRecords').set(JSON.stringify(shiftTimeRecords)); }
+    function saveOfficeNames() { dbRef.child('officeNames').set(JSON.stringify(officeNames)); }
+    function saveAllToFirebase() { saveMasterData(); saveAttendanceRecords(); saveExtraFoodRecords(); saveShiftTimeRecords(); saveOfficeNames(); }
+
+    dbRef.child('masterData').on('value', (snap) => {
+        if (snap.val()) masterData = JSON.parse(snap.val());
+        if (typeof renderAll === 'function') renderAll();
+    });
+    dbRef.child('attendanceRecords').on('value', (snap) => {
+        if (snap.val()) attendanceRecords = JSON.parse(snap.val());
+        if (typeof renderAll === 'function') renderAll();
+    });
+    dbRef.child('extraFoodRecords').on('value', (snap) => {
+        if (snap.val()) extraFoodRecords = JSON.parse(snap.val());
+        if (typeof renderAll === 'function') renderAll();
+    });
+    dbRef.child('shiftTimeRecords').on('value', (snap) => {
+        if (snap.val()) shiftTimeRecords = JSON.parse(snap.val());
+        if (typeof renderAll === 'function') {
+            document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+            renderAll();
+        }
+    });
+    dbRef.child('officeNames').on('value', (snap) => {
+        if (snap.val()) officeNames = JSON.parse(snap.val());
+        if (typeof renderAll === 'function') {
+            document.getElementById('main-title').innerText = officeNames[currentLang];
+            renderAll();
+        }
+    });
+    // ═══════════ End Firebase Setup ═══════════
+
+    const labels = {
+        gu: {
+            sub: "ડિપાર્ટમેન્ટ વાઇઝ સન્ડે અને ઓવરટાઇમ હાજરી મેનેજમેન્ટ", labelDate: "📅 તારીખ:",
+            addDeptPl: "નવો વિભાગ ઉમેરો...", addDeptBtn: "+ વિભાગ", empPl: "કર્મચારીનું નામ...",
+            repSun: "📋 ફાઇનલ કાઉન્ટ રીપોર્ટ (Sunday)", repOt: "📋 ફાઇનલ કાઉન્ટ રીપોર્ટ (Overtime)",
+            listSun: "👤 સન્ડે હાજરી રીપોર્ટ", listOt: "👤 ઓવરટાઇમ હાજરી રીપોર્ટ",
+            extNasto: "🍩 એક્સ્ટ્રા નાસ્તો:", extFaral: "🥛 એક્સ્ટ્રા ફરાળ:",
+            totalSun: "રવિવારે આવનાર કુલ કર્મચારીઓ", totalOt: "ઓવરટાઇમ કરનાર કુલ કર્મચારીઓ",
+            orderNasto: "નાસ્તો ઓર્ડર", orderFaral: "ફરાળ ઓર્ડર", staff: "સ્ટાફ", extra: "એક્સ્ટ્રા", total: "કુલ",
+            nBadge: "નાસ્તો", fBadge: "ફરાળ", emptyList: "કોઈ કર્મચારી નથી.", noDept: "કોઈ વિભાગ નથી.",
+            dlBtn: "ડાઉનલોડ રીપોર્ટ (Image)", modeText: "પ્રકાર", shiftTimeText: "⏰ શિફ્ટ સમય:",
+            eraseBtnText: "🧹 ક્લિયર ઓલ", eraseConfirm: "શું તમે આ તારીખનો તમામ હાજરી ડેટા અને શિફ્ટ ટાઇમ ક્લિયર કરવા માંગો છો?"
+        },
+        en: {
+            sub: "Department-wise Sunday & Overtime Attendance Management", labelDate: "📅 Date:",
+            addDeptPl: "Add new department...", addDeptBtn: "+ Dept", empPl: "Employee name...",
+            repSun: "📋 Final Count Report (Sunday)", repOt: "📋 Final Count Report (Overtime)",
+            listSun: "👤 Sunday Attendance Report", listOt: "👤 Overtime Attendance Report",
+            extNasto: "🍩 Extra Snacks:", extFaral: "🥛 Extra Faral:",
+            totalSun: "Total Employees Coming on Sunday", totalOt: "Total Employees Doing Overtime",
+            orderNasto: "Snacks Order", orderFaral: "Faral Order", staff: "Staff", extra: "Extra", total: "Total",
+            nBadge: "Snacks", fBadge: "Faral", emptyList: "No employee added.", noDept: "No departments added.",
+            dlBtn: "Download Report (Image)", modeText: "Mode", shiftTimeText: "⏰ Shift Time:",
+            eraseBtnText: "🧹 Clear All", eraseConfirm: "Are you sure you want to clear all attendance and shift time data for this date?"
+        }
+    };
+
+    const daysDictionary = {
+        gu: ["રવિવાર (Sunday)", "સોમવાર (Monday)", "મંગળવાર (Tuesday)", "બુધવાર (Wednesday)", "ગુરુવાર (Thursday)", "શુક્રવાર (Friday)", "શનિવાર (Saturday)"],
+        en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    };
+
+    function initDate() {
+        let savedDate = localStorage.getItem('officeSelectedDate');
+        if (savedDate) {
+            selectedDate = savedDate;
+        } else {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1;
+            let dd = today.getDate();
+            if (dd < 10) dd = '0' + dd;
+            if (mm < 10) mm = '0' + mm;
+            selectedDate = yyyy + '-' + mm + '-' + dd;
+        }
+        document.getElementById('attendance-date').value = selectedDate;
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('officeTheme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const activeTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+        localStorage.setItem('officeTheme', activeTheme);
+    }
+
+    function exportBackupData() {
+        const backupObject = {
+            officeCustomTitle: JSON.stringify(officeNames),
+            officeMasterStructure: JSON.stringify(masterData),
+            officeDateWiseRecords: JSON.stringify(attendanceRecords),
+            officeDateWiseExtraFood: JSON.stringify(extraFoodRecords),
+            officeDateWiseShiftTime: JSON.stringify(shiftTimeRecords)
+        };
+        const jsonString = JSON.stringify(backupObject);
+        const blob = new Blob([jsonString], { type: "text/plain;charset=utf-8" });
+        const downloadAnchor = document.createElement('a');
+        const today = new Date().toISOString().slice(0, 10);
+        downloadAnchor.href = URL.createObjectURL(blob);
+        downloadAnchor.setAttribute("download", `attendance_backup_${today}.txt`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function triggerImportClick() {
+        document.getElementById('hidden-file-input').click();
+    }
+
+    function importBackupData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsedData = JSON.parse(e.target.result);
+                if (!parsedData.officeMasterStructure && !parsedData.officeDateWiseRecords) {
+                    alert(currentLang === 'gu' ? "ભૂલ: આ માન્ય બેકઅપ ફાઇલ નથી!" : "Error: Invalid backup file!");
+                    return;
+                }
+
+                let confirmMsg = currentLang === 'gu' 
+                    ? "શું તમે આ બેકઅપ ડેટા ઇમ્પોર્ટ કરવા માંગો છો? આનાથી જૂનો ડેટા બદલાઈ જશે." 
+                    : "Do you want to import this backup? It will overwrite current data.";
+
+                if (confirm(confirmMsg)) {
+                    if (parsedData.officeCustomTitle) officeNames = JSON.parse(parsedData.officeCustomTitle);
+                    if (parsedData.officeMasterStructure) masterData = JSON.parse(parsedData.officeMasterStructure);
+                    if (parsedData.officeDateWiseRecords) attendanceRecords = JSON.parse(parsedData.officeDateWiseRecords);
+                    if (parsedData.officeDateWiseExtraFood) extraFoodRecords = JSON.parse(parsedData.officeDateWiseExtraFood);
+                    if (parsedData.officeDateWiseShiftTime) shiftTimeRecords = JSON.parse(parsedData.officeDateWiseShiftTime);
+
+                    saveAllToFirebase();
+
+                    document.getElementById('main-title').innerText = officeNames[currentLang];
+                    onDateChange();
+                    alert(currentLang === 'gu' ? "બેકઅપ સફળતાપૂર્વક ઇમ્પોર્ટ થઈ ગયો છે!" : "Backup imported successfully!");
+                }
+            } catch (err) {
+                alert(currentLang === 'gu' ? "ફાઇલ વાંચવામાં ભૂલ આવી છે! કૃપા કરીને સાચી .txt બેકઅપ ફાઇલ સિલેક્ટ કરો." : "Error reading file! Please select a valid .txt backup file.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; 
+    }
+
+    function getFormattedDateAndDay(inputDateStr) {
+        if (!inputDateStr) return { formattedDate: '--', dayName: '--' };
+        const dateParts = inputDateStr.split('-');
+        const dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+        let dd = dateObj.getDate();
+        let mm = dateObj.getMonth() + 1;
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        return { formattedDate: `${dd}/${mm}/${dateObj.getFullYear()}`, dayName: daysDictionary[currentLang][dateObj.getDay()] };
+    }
+
+    function onDateChange() {
+        selectedDate = document.getElementById('attendance-date').value;
+        localStorage.setItem('officeSelectedDate', selectedDate);
+        document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+        renderAll();
+    }
+
+    function onShiftTimeChange() {
+        let val = document.getElementById('shift-time-input').value.trim();
+        shiftTimeRecords[selectedDate] = val;
+        saveShiftTimeRecords();
+        renderAll();
+    }
+
+    function eraseAllAttendance() {
+        if (confirm(labels[currentLang].eraseConfirm)) {
+            Object.keys(attendanceRecords).forEach(key => {
+                if (key.startsWith(selectedDate + "_")) {
+                    delete attendanceRecords[key];
+                }
+            });
+            if (extraFoodRecords[selectedDate]) delete extraFoodRecords[selectedDate];
+            if (shiftTimeRecords[selectedDate]) delete shiftTimeRecords[selectedDate];
+            
+            saveAttendanceRecords();
+            saveExtraFoodRecords();
+            saveShiftTimeRecords();
+            
+            document.getElementById('shift-time-input').value = '';
+            renderAll();
+        }
+    }
+
+    function toggleSecurityLock() {
+        isUnlocked = !isUnlocked;
+        const lockBtn = document.getElementById('main-lock-btn');
+        const mainEditBtn = document.getElementById('main-edit-title-btn');
+
+        if (isUnlocked) {
+            lockBtn.innerText = "🔓 Unlocked (Edit Mode)";
+            lockBtn.classList.add('unlocked');
+            mainEditBtn.style.display = 'inline-block';
+        } else {
+            lockBtn.innerText = "🔒 Lock (Safe Mode)";
+            lockBtn.classList.remove('unlocked');
+            mainEditBtn.style.display = 'none';
+        }
+        renderAll(); 
+    }
+
+    function editMainTitle() {
+        if(!isUnlocked) return;
+        let msg = currentLang === 'gu' ? "તમારી ઓફિસ/કંપનીનું નવું નામ લખો:" : "Enter Office/Company name:";
+        let newTitle = prompt(msg, officeNames[currentLang].replace("📊 ", ""));
+        if (newTitle && newTitle.trim() !== "") {
+            officeNames[currentLang] = "📊 " + newTitle.trim();
+            saveOfficeNames();
+            document.getElementById('main-title').innerText = officeNames[currentLang];
+            renderAll();
+        }
+    }
+
+    function editDepartmentName(oldName) {
+        if(!isUnlocked) return;
+        let msg = currentLang === 'gu' ? `"${oldName}" વિભાગનું નવું નામ લખો:` : `Enter new name for "${oldName}":`;
+        let newName = prompt(msg, oldName);
+        if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+            newName = newName.trim();
+            masterData[newName] = masterData[oldName];
+            delete masterData[oldName];
+            saveMasterData();
+            renderAll();
+        }
+    }
+
+    function editEmployeeName(deptName, index, oldName) {
+        if(!isUnlocked) return;
+        let msg = currentLang === 'gu' ? `"${oldName}" કર્મચારીનું નવું નામ લખો:` : `Enter new name for "${oldName}":`;
+        let newName = prompt(msg, oldName);
+        if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+            newName = newName.trim();
+            masterData[deptName][index] = newName;
+            saveMasterData();
+            renderAll();
+        }
+    }
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'gu' ? 'en' : 'gu';
+        document.getElementById('main-title').innerText = officeNames[currentLang];
+        document.getElementById('main-sub').innerText = labels[currentLang].sub;
+        document.getElementById('label-date').innerText = labels[currentLang].labelDate;
+        document.getElementById('new-dept-name').placeholder = labels[currentLang].addDeptPl;
+        document.getElementById('add-dept-btn').innerText = labels[currentLang].addDeptBtn;
+        document.getElementById('label-ext-nasto').innerText = labels[currentLang].extNasto;
+        document.getElementById('label-ext-faral').innerText = labels[currentLang].extFaral;
+        document.getElementById('label-download-btn').innerText = labels[currentLang].dlBtn;
+        document.getElementById('label-shift-time').innerText = labels[currentLang].shiftTimeText;
+        document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
+        switchMode(currentMode);
+    }
+
+    function switchMode(mode) {
+        currentMode = mode;
+        const body = document.body;
+        const btnSunday = document.getElementById('btn-sunday');
+        const btnOt = document.getElementById('btn-ot');
+        const reportHeader = document.getElementById('report-header');
+        const extraFoodBox = document.getElementById('extra-food-box');
+        const filteredHeader = document.getElementById('filtered-header');
+        const shiftTimeBox = document.getElementById('shift-time-box');
+
+        if (mode === 'sunday') {
+            body.classList.add('sunday-theme');
+            body.classList.remove('ot-theme');
+            btnSunday.className = 'mode-btn active-sunday';
+            btnOt.className = 'mode-btn';
+            reportHeader.innerText = labels[currentLang].repSun;
+            filteredHeader.innerText = labels[currentLang].listSun;
+            extraFoodBox.style.display = 'none';
+            shiftTimeBox.style.display = 'flex'; 
+        } else {
+            body.classList.add('ot-theme');
+            body.classList.remove('sunday-theme');
+            btnSunday.className = 'mode-btn';
+            btnOt.className = 'mode-btn active-ot';
+            reportHeader.innerText = labels[currentLang].repOt;
+            filteredHeader.innerText = labels[currentLang].listOt;
+            extraFoodBox.style.display = 'flex';
+            shiftTimeBox.style.display = 'none'; 
+        }
+        renderAll();
+    }
+
+    function changeExtra(type, val) {
+        if (!extraFoodRecords[selectedDate]) extraFoodRecords[selectedDate] = { nasto: 0, faral: 0 };
+        extraFoodRecords[selectedDate][type] += val;
+        if (extraFoodRecords[selectedDate][type] < 0) extraFoodRecords[selectedDate][type] = 0;
+        saveExtraFoodRecords();
+        renderAll();
+    }
+
+    function addDepartment() {
+        const input = document.getElementById('new-dept-name');
+        const deptName = input.value.trim();
+        if (deptName === '' || masterData[deptName]) return;
+        masterData[deptName] = [];
+        input.value = '';
+        saveMasterData();
+        renderAll();
+    }
+
+    function handleDeptKeyPress(event) { if (event.key === 'Enter') addDepartment(); }
+
+    function deleteDepartment(deptName) {
+        let msg = currentLang === 'gu' ? `શું તમે આખો "${deptName}" વિભાગ ડીલીટ કરવા માંગો છો?` : `Delete entire "${deptName}"?`;
+        if (confirm(msg)) { delete masterData[deptName]; saveMasterData(); renderAll(); }
+    }
+
+    function addEmployee(deptName, inputId) {
+        const input = document.getElementById(inputId);
+        const name = input.value.trim();
+        if (name === '') return;
+        masterData[deptName].push(name);
+        input.value = '';
+        saveMasterData();
+        renderAll();
+    }
+
+    function handleEmpKeyPress(event, deptName, inputId) { if (event.key === 'Enter') addEmployee(deptName, inputId); }
+
+    function deleteEmployee(deptName, index) {
+        masterData[deptName].splice(index, 1);
+        saveMasterData();
+        renderAll();
+    }
+
+    function getStatus(deptName, empName, field) {
+        let key = `${selectedDate}_${deptName}_${empName}`;
+        return attendanceRecords[key] ? attendanceRecords[key][field] : false;
+    }
+
+    function toggleStatus(deptName, empName, field) {
+        let key = `${selectedDate}_${deptName}_${empName}`;
+        if (!attendanceRecords[key]) attendanceRecords[key] = { sunday: false, nasto: false, faral: false, onlyOt: false };
+        
+        if (field === 'sunday') { 
+            attendanceRecords[key].sunday = !attendanceRecords[key].sunday; 
+        } else if (field === 'nasto') { 
+            attendanceRecords[key].nasto = !attendanceRecords[key].nasto; 
+            if (attendanceRecords[key].nasto) {
+                attendanceRecords[key].faral = false;
+                attendanceRecords[key].onlyOt = false;
+            }
+        } else if (field === 'faral') { 
+            attendanceRecords[key].faral = !attendanceRecords[key].faral; 
+            if (attendanceRecords[key].faral) {
+                attendanceRecords[key].nasto = false;
+                attendanceRecords[key].onlyOt = false;
+            }
+        } else if (field === 'onlyOt') {
+            attendanceRecords[key].onlyOt = !attendanceRecords[key].onlyOt;
+            if (attendanceRecords[key].onlyOt) {
+                attendanceRecords[key].nasto = false;
+                attendanceRecords[key].faral = false;
+            }
+        }
+        saveAttendanceRecords();
+        renderAll();
+    }
+
+    function downloadReportImage() {
+        const captureZone = document.getElementById('capture-zone');
+        const { formattedDate, dayName } = getFormattedDateAndDay(selectedDate);
+        
+        const cleanTitle = officeNames[currentLang].replace("📊 ", "");
+        document.getElementById('cap-office-title').innerText = cleanTitle;
+        
+        const modeLabel = currentMode === 'sunday' ? 'Sunday' : 'OT';
+        document.getElementById('cap-date-details').innerText = `${formattedDate} (${dayName}) | પ્રકાર: ${modeLabel}`;
+
+        const isDarkActive = document.body.classList.contains('dark-theme');
+        if(isDarkActive) document.body.classList.remove('dark-theme');
+
+        captureZone.classList.add('capture-mode-active');
+
+        html2canvas(captureZone, {
+            scale: 2, 
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            windowWidth: 1200 
+        }).then(canvas => {
+            captureZone.classList.remove('capture-mode-active');
+            if(isDarkActive) document.body.classList.add('dark-theme'); 
+
+            const imageLink = document.createElement('a');
+            imageLink.download = `Attendance_${formattedDate.replace(/\//g, '-')}_${currentMode}.png`;
+            imageLink.href = canvas.toDataURL('image/png');
+            imageLink.click();
+        });
+    }
+
+    function renderAll() {
+        const gridBox = document.getElementById('main-departments-grid');
+        const reportGridBox = document.getElementById('report-grid-box');
+        const filteredHorizontalBox = document.getElementById('filtered-horizontal-box');
+        
+        gridBox.innerHTML = '';
+        reportGridBox.innerHTML = '';
+        filteredHorizontalBox.innerHTML = '';
+
+        let grandTotal = 0;
+        let totalNasto = 0;
+        let totalFaral = 0;
+        let anyEmployeeGlobal = false;
+        let deptKeys = Object.keys(masterData);
+        let l = labels[currentLang];
+
+        let currentExtra = extraFoodRecords[selectedDate] || { nasto: 0, faral: 0 };
+        document.getElementById('ext-nasto-val').innerText = currentExtra.nasto;
+        document.getElementById('ext-faral-val').innerText = currentExtra.faral;
+
+        if (deptKeys.length === 0) {
+            gridBox.innerHTML = `<div class="no-dept-msg">${l.noDept}</div>`;
+            filteredHorizontalBox.innerHTML = `<div class="no-active-msg">${l.emptyList}</div>`;
+            document.getElementById('r-total-text').innerHTML = `<span class="grand-total-text">${l.total}: 0</span>`;
+            return;
+        }
+
+        deptKeys.forEach((deptName, deptIndex) => {
+            let deptPresentCount = 0;
+            
+            let listNasto = [];
+            let listFaral = [];
+            let listOnlyOt = [];
+            let listAbsent = [];
+            let listPresentSunday = [];
+            
+            const inputId = `input-dept-${deptIndex}`;
+            const deptCard = document.createElement('div');
+            deptCard.className = 'dept-card';
+            
+            let deleteStyle = isUnlocked ? 'display: inline-block;' : 'display: none;';
+            let editStyle = isUnlocked ? 'display: inline-block;' : 'display: none;';
+            let showEmpInputStyle = isUnlocked ? 'display: flex;' : 'display: none;';
+            
+            let cardHTML = `
+                <div class="dept-header">
+                    <div class="title-container">
+                        <h3 class="dept-title">${deptName}</h3>
+                        <button class="edit-btn" style="${editStyle}" onclick="editDepartmentName('${deptName}')" title="Edit Name">✏️</button>
+                    </div>
+                    <button class="delete-dept-btn" style="${deleteStyle}" onclick="deleteDepartment('${deptName}')">✕</button>
+                </div>
+                <div class="add-emp-form" style="${showEmpInputStyle}">
+                    <input type="text" id="${inputId}" placeholder="${l.empPl}" onkeypress="handleEmpKeyPress(event, '${deptName}', '${inputId}')">
+                    <button onclick="addEmployee('${deptName}', '${inputId}')">+</button>
+                </div>
+                <ul class="emp-list">
+            `;
+
+            masterData[deptName].forEach((empName, index) => {
+                let innerActionHTML = '';
+                let statusBadgeHTML = '';
+
+                let isSun = getStatus(deptName, empName, 'sunday');
+                let isNasto = getStatus(deptName, empName, 'nasto');
+                let isFaral = getStatus(deptName, empName, 'faral');
+                let isOnlyOt = getStatus(deptName, empName, 'onlyOt');
+
+                if (currentMode === 'sunday') {
+                    if (isSun) { 
+                        deptPresentCount++; grandTotal++; 
+                        statusBadgeHTML = `<span class="food-badge badge-yes">Yes</span>`; 
+                        listPresentSunday.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
+                    } else {
+                        statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
+                        listAbsent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: true });
+                    }
+                    let statusText = isSun ? "Yes" : "No";
+                    let buttonClass = isSun ? "btn-present" : "btn-absent";
+                    innerActionHTML = `<button class="status-toggle-btn ${buttonClass}" onclick="toggleStatus('${deptName}', '${empName}', 'sunday')">${statusText}</button>`;
+                } else {
+                    if (isNasto || isFaral || isOnlyOt) {
+                        deptPresentCount++; grandTotal++;
+                        if (isNasto) { 
+                            totalNasto++; 
+                            statusBadgeHTML = `<span class="food-badge badge-nasto">${l.nBadge}</span>`; 
+                            listNasto.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
+                        }
+                        if (isFaral) { 
+                            totalFaral++; 
+                            statusBadgeHTML = `<span class="food-badge badge-faral">${l.fBadge}</span>`; 
+                            listFaral.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
+                        }
+                        if (isOnlyOt) {
+                            statusBadgeHTML = `<span class="food-badge badge-only-ot">Yes</span>`;
+                            listOnlyOt.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: false });
+                        }
+                    } else {
+                        statusBadgeHTML = `<span class="food-badge badge-no">No</span>`; 
+                        listAbsent.push({ name: empName, statusBadge: statusBadgeHTML, isAbsent: true });
+                    }
+                    
+                    let nastoClass = isNasto ? "btn-nasto-active" : "btn-inactive";
+                    let faralClass = isFaral ? "btn-faral-active" : "btn-inactive";
+                    let onlyOtClass = isOnlyOt ? "btn-only-ot-active" : "btn-inactive";
+                    
+                    innerActionHTML = `
+                        <div class="btn-group">
+                            <button class="status-toggle-btn ${nastoClass}" onclick="toggleStatus('${deptName}', '${empName}', 'nasto')">N</button>
+                            <button class="status-toggle-btn ${faralClass}" onclick="toggleStatus('${deptName}', '${empName}', 'faral')">F</button>
+                            <button class="status-toggle-btn ${onlyOtClass}" onclick="toggleStatus('${deptName}', '${empName}', 'onlyOt')">OT</button>
+                        </div>
+                    `;
+                }
+
+                cardHTML += `
+                    <li class="emp-item">
+                        <div class="name-container">
+                            <span class="emp-name">${empName}</span>
+                            <button class="edit-btn" style="${editStyle}" onclick="editEmployeeName('${deptName}', ${index}, '${empName}')" title="Edit Name">✏️</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${innerActionHTML}
+                            <button class="delete-btn" style="${deleteStyle}" onclick="deleteEmployee('${deptName}', ${index})">✕</button>
+                        </div>
+                    </li>
+                `;
+            });
+
+            cardHTML += `</ul>`;
+            deptCard.innerHTML = cardHTML;
+            gridBox.appendChild(deptCard);
+
+            const reportItem = document.createElement('div');
+            reportItem.className = 'report-item';
+            reportItem.innerHTML = `<div>${deptName}</div> <span>${deptPresentCount}</span>`;
+            reportGridBox.appendChild(reportItem);
+
+            let sortedStaffList = [];
+            if (currentMode === 'sunday') {
+                sortedStaffList = listPresentSunday.concat(listAbsent);
+            } else {
+                sortedStaffList = listNasto.concat(listFaral, listOnlyOt, listAbsent);
+            }
+
+            if (sortedStaffList.length > 0) {
+                anyEmployeeGlobal = true;
+                
+                const deptGroupDiv = document.createElement('div');
+                deptGroupDiv.className = `filtered-dept-group`;
+                let groupHTML = `<div class="filtered-dept-header">${deptName}</div><ul class="filtered-vertical-list">`;
+                
+                let pIndex = 1; 
+                sortedStaffList.forEach((emp) => {
+                    let displayIndex = `${pIndex++}. `;
+                    groupHTML += `<li class="filtered-emp-row"><div>${displayIndex}${emp.name}</div>${emp.statusBadge}</li>`;
+                });
+                groupHTML += `</ul>`;
+                deptGroupDiv.innerHTML = groupHTML;
+                filteredHorizontalBox.appendChild(deptGroupDiv);
+            }
+        });
+
+        if (!anyEmployeeGlobal) filteredHorizontalBox.innerHTML = `<div class="no-active-msg">${l.emptyList}</div>`;
+
+        let finalNastoOrder = totalNasto + currentExtra.nasto;
+        let finalFaralOrder = totalFaral + currentExtra.faral;
+
+        const rTotalText = document.getElementById('r-total-text');
+        if (currentMode === 'sunday') {
+            rTotalText.innerHTML = `<div class="grand-total-text">${l.totalSun}: ${grandTotal}</div>`;
+        } else {
+            rTotalText.innerHTML = `
+                <div class="grand-total-text">${l.totalOt}: ${grandTotal}</div>
+                <div class="ot-food-breakdown">
+                    <div class="food-row">
+                        <span>🍩 <b>${l.orderNasto}:</b> ${l.staff}(${totalNasto}) + ${l.extra}(${currentExtra.nasto})</span>
+                        <span><b><u>${l.total}: ${finalNastoOrder}</u></b></span>
+                    </div>
+                    <div class="food-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
+                        <span>🥛 <b>${l.orderFaral}:</b> ${l.staff}(${totalFaral}) + ${l.extra}(${currentExtra.faral})</span>
+                        <span><b><u>${l.total}: ${finalFaralOrder}</u></b></span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    initDate();
+    initTheme();
+    document.getElementById('main-title').innerText = officeNames[currentLang];
+    document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+    document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
+    switchMode('sunday');
+</script>
+
 </body>
 </html>
