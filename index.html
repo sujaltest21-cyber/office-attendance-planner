@@ -455,6 +455,7 @@
         }
         .capture-mode-active .capture-header {
             display: block !important;
+            border-bottom: 2px solid #e2e8f0 !important;
         }
 
         .download-capture-area {
@@ -469,6 +470,65 @@
         }
         body.dark-theme .download-capture-area {
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* Capture Mode Overrides to match original screenshot */
+        .capture-mode-active {
+            background: #ffffff !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 24px !important;
+            border-radius: 0 !important;
+        }
+        .capture-mode-active .capture-header h2 {
+            color: #1e293b !important;
+        }
+        .capture-mode-active .capture-header p {
+            color: #475569 !important;
+        }
+        .capture-mode-active .panel-card {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+            border-radius: 12px !important;
+        }
+        .capture-mode-active .report-item {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+        .capture-mode-active .report-item span {
+            color: #0f172a !important;
+        }
+        .capture-mode-active .extra-container {
+            background: #f8fafc !important;
+            border: 1px dashed #cbd5e1 !important;
+        }
+        .capture-mode-active .extra-val {
+            color: #1e293b !important;
+        }
+        .capture-mode-active .extra-btn {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+        }
+        .capture-mode-active .ot-food-breakdown {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+        .capture-mode-active .filtered-dept-group {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+        }
+        .capture-mode-active .filtered-dept-header {
+            color: #0f172a !important;
+            background: #e2e8f0 !important;
+        }
+        .capture-mode-active .filtered-emp-row {
+            border-bottom: 1px dashed #e2e8f0 !important;
+            color: #1e293b !important;
         }
 
         .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } 
