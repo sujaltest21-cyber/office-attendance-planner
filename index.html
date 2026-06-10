@@ -699,18 +699,13 @@
     };
 
     function initDate() {
-        let savedDate = localStorage.getItem('officeSelectedDate');
-        if (savedDate) {
-            selectedDate = savedDate;
-        } else {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            let mm = today.getMonth() + 1;
-            let dd = today.getDate();
-            if (dd < 10) dd = '0' + dd;
-            if (mm < 10) mm = '0' + mm;
-            selectedDate = yyyy + '-' + mm + '-' + dd;
-        }
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        selectedDate = yyyy + '-' + mm + '-' + dd;
         document.getElementById('attendance-date').value = selectedDate;
     }
 
@@ -801,7 +796,6 @@
 
     function onDateChange() {
         selectedDate = document.getElementById('attendance-date').value;
-        localStorage.setItem('officeSelectedDate', selectedDate);
         document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
         renderAll();
     }
