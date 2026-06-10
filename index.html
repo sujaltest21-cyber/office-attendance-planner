@@ -1386,6 +1386,7 @@
 
     function switchMode(mode) {
         currentMode = mode;
+        localStorage.setItem('officeCurrentMode', mode);
         const body = document.body;
         const btnSunday = document.getElementById('btn-sunday');
         const btnOt = document.getElementById('btn-ot');
@@ -1719,7 +1720,8 @@
     document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
     updateSaveButtonState();
     updateCloudSyncUI();
-    switchMode('sunday');
+    let savedMode = localStorage.getItem('officeCurrentMode') || 'sunday';
+    switchMode(savedMode);
 
     // Auto-populate Firebase if database is empty and sync is active (first load)
     dbRef.child('masterData').once('value', (snap) => {
