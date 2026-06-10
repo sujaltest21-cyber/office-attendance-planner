@@ -3,54 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર</title>
+    <title>ઓફિસ સન્ડે અને ઓવરટાઇમ પ્લાનર (Premium Glassmorphism)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
         :root {
-            --primary-color: #1e293b;
+            --primary-color: #0f172a;
             --sunday-color: #ef4444;
-            --sunday-bg: #fee2e2;
+            --sunday-bg: rgba(239, 68, 68, 0.12);
             --ot-color: #10b981;
-            --ot-bg: #d1fae5;
+            --ot-bg: rgba(16, 185, 129, 0.12);
             --faral-color: #f59e0b;
-            --faral-bg: #fef3c7;
+            --faral-bg: rgba(245, 158, 11, 0.12);
             --bg-color: #f1f5f9;
-            --card-bg: #ffffff;
-            --text-main: #334155;
-            --text-light: #64748b;
-            --border-color: #e2e8f0;
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --text-main: #1e293b;
+            --text-light: #475569;
+            --border-color: rgba(255, 255, 255, 0.35);
             --blue-color: #3b82f6;
-            --blue-bg: #dbeafe;
-            --panel-muted: #f8fafc;
-            --dept-header-bg: #e2e8f0;
+            --blue-bg: rgba(59, 130, 246, 0.12);
+            --panel-muted: rgba(255, 255, 255, 0.25);
+            --dept-header-bg: rgba(255, 255, 255, 0.35);
         }
 
         /* Dark Mode Theme Variables */
         body.dark-theme {
             --primary-color: #f8fafc;
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #090d16;
+            --card-bg: rgba(15, 23, 42, 0.45);
             --text-main: #cbd5e1;
             --text-light: #94a3b8;
-            --border-color: #334155;
-            --panel-muted: #1e293b;
-            --dept-header-bg: #334155;
-            --sunday-bg: #451a1a;
-            --ot-bg: #064e3b;
-            --faral-bg: #451a03;
-            --blue-bg: #172554;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --panel-muted: rgba(15, 23, 42, 0.25);
+            --dept-header-bg: rgba(15, 23, 42, 0.35);
+            --sunday-bg: rgba(239, 68, 68, 0.18);
+            --ot-bg: rgba(16, 185, 129, 0.18);
+            --faral-bg: rgba(245, 158, 11, 0.18);
+            --blue-bg: rgba(59, 130, 246, 0.18);
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Outfit', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f5f3ff 100%);
             margin: 0;
             padding: 16px;
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+        body.dark-theme {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        /* Ambient Glowing Background Blobs */
+        .background-decor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .bg-blob {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.4;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+        .sunday-theme .blob-1 { background: #ea580c; top: -50px; left: -50px; }
+        .sunday-theme .blob-2 { background: #ef4444; bottom: -50px; right: -50px; }
+        .ot-theme .blob-1 { background: #10b981; top: -50px; left: -50px; }
+        .ot-theme .blob-2 { background: #3b82f6; bottom: -50px; right: -50px; }
+        body.dark-theme .bg-blob {
+            opacity: 0.18;
+            filter: blur(160px);
         }
 
         .container {
@@ -62,6 +98,84 @@
             text-align: center;
             margin-bottom: 25px;
             position: relative;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            transition: all 0.3s ease;
+        }
+        body.dark-theme header {
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* Cloud Sync Pill Status Button */
+        .cloud-status-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            margin-bottom: 8px;
+        }
+        @media (min-width: 768px) {
+            .cloud-status-wrapper {
+                position: absolute;
+                top: 15px;
+                left: 15px;
+                margin: 0;
+            }
+        }
+        .cloud-status-pill {
+            background-color: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10b981;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+            outline: none;
+        }
+        .cloud-status-pill:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
+            background-color: rgba(16, 185, 129, 0.25);
+        }
+        .cloud-status-pill:active {
+            transform: translateY(1px);
+        }
+        
+        .cloud-status-pill.offline {
+            background-color: rgba(100, 116, 139, 0.12) !important;
+            border-color: rgba(100, 116, 139, 0.3) !important;
+            color: #64748b !important;
+            box-shadow: none !important;
+        }
+        body.dark-theme .cloud-status-pill.offline {
+            background-color: rgba(148, 163, 184, 0.08) !important;
+            border-color: rgba(148, 163, 184, 0.2) !important;
+            color: #94a3b8 !important;
+        }
+        .cloud-status-pill.offline:hover {
+            background-color: rgba(100, 116, 139, 0.2) !important;
+        }
+
+        .cloud-status-pill.saving {
+            background-color: rgba(59, 130, 246, 0.18) !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
+            color: #3b82f6 !important;
+            animation: pulse-sync-pill 1.5s infinite;
+        }
+        @keyframes pulse-sync-pill {
+            0% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.85; }
         }
 
         .title-wrapper {
@@ -79,37 +193,46 @@
         }
 
         .edit-title-btn, .edit-btn {
-            background: none;
-            border: none;
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
             cursor: pointer;
-            font-size: 1.1rem;
-            opacity: 0.5;
-            padding: 2px 6px;
-            transition: opacity 0.2s;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            width: 28px;
+            height: 28px;
             display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
-        .edit-title-btn:hover, .edit-btn:hover { opacity: 1; }
+        body.dark-theme .edit-title-btn, body.dark-theme .edit-btn {
+            background: rgba(0,0,0,0.25);
+            border-color: rgba(255,255,255,0.05);
+        }
+        .edit-title-btn:hover, .edit-btn:hover { opacity: 1; transform: scale(1.1); }
 
         header p {
             color: var(--text-light);
             margin: 4px 0 0 0;
             font-size: 0.95rem;
+            font-weight: 500;
         }
 
         .theme-switcher-wrapper {
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
             display: flex;
             justify-content: center;
             gap: 8px;
         }
-
         @media (min-width: 768px) {
-            .theme-switcher-wrapper { position: absolute; top: 0; right: 0; margin-top: 0; }
+            .theme-switcher-wrapper { position: absolute; top: 15px; right: 15px; margin-top: 0; }
         }
 
         .lang-btn, .theme-btn, .lock-btn, .erase-btn, .backup-btn {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(4px);
             border: 1px solid var(--border-color);
             padding: 6px 14px;
             border-radius: 20px;
@@ -117,17 +240,32 @@
             font-weight: 700;
             font-size: 0.85rem;
             color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.dark-theme .lang-btn, body.dark-theme .theme-btn, body.dark-theme .lock-btn, body.dark-theme .erase-btn, body.dark-theme .backup-btn {
+            background: rgba(15, 23, 42, 0.45);
+            color: var(--primary-color);
+        }
+        
+        .lang-btn:hover, .theme-btn:hover, .lock-btn:hover, .backup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.75);
+        }
+        body.dark-theme .lang-btn:hover, body.dark-theme .theme-btn:hover, body.dark-theme .lock-btn:hover, body.dark-theme .backup-btn:hover {
+            background: rgba(15, 23, 42, 0.75);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
         .lock-btn.unlocked {
-            background-color: #fef2f2;
+            background-color: #fee2e2;
             color: var(--sunday-color);
-            border-color: var(--sunday-color);
+            border-color: #fca5a5;
         }
         body.dark-theme .lock-btn.unlocked {
             background-color: #451a1a;
+            border-color: #7f1d1d;
         }
         
         .erase-btn {
@@ -135,14 +273,14 @@
             color: #ea580c;
             border-color: #fdba74;
         }
-        .erase-btn:hover { background-color: #ffedd5; }
+        .erase-btn:hover { background-color: #ffedd5; transform: translateY(-2px); }
         body.dark-theme .erase-btn { background-color: #431407; color: #ff9770; border-color: #9a3412; }
         body.dark-theme .erase-btn:hover { background-color: #7c2d12; }
         
-        .backup-btn.export-btn { background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        .backup-btn.export-btn { background-color: rgba(16, 185, 129, 0.12); color: #16a34a; border-color: rgba(16, 185, 129, 0.25); }
         body.dark-theme .backup-btn.export-btn { background-color: #064e3b; color: #4ade80; border-color: #14532d; }
         
-        .backup-btn.import-btn { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .backup-btn.import-btn { background-color: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.25); }
         body.dark-theme .backup-btn.import-btn { background-color: #172554; color: #60a5fa; border-color: #1e3a8a; }
 
         .controls-row {
@@ -151,10 +289,15 @@
             gap: 12px;
             margin-bottom: 25px;
             background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             padding: 14px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
             border: 1px solid var(--border-color);
+        }
+        body.dark-theme .controls-row {
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         }
 
         @media (min-width: 768px) {
@@ -167,7 +310,6 @@
             gap: 12px;
             width: 100%;
         }
-
         @media (min-width: 768px) {
             .left-controls { flex-direction: row; align-items: center; width: auto; }
         }
@@ -179,16 +321,17 @@
             font-weight: 700;
             font-size: 0.95rem;
             color: var(--primary-color);
-            background: var(--bg-color);
+            background: var(--panel-muted);
             padding: 8px 12px;
-            border-radius: 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
             gap: 8px;
         }
 
         .date-input-wrapper input {
             padding: 6px 8px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
             outline: none;
@@ -205,13 +348,12 @@
 
         .mode-switcher {
             display: flex;
-            background: var(--bg-color);
+            background: var(--panel-muted);
             padding: 4px;
             border-radius: 9999px;
             width: 100%;
             border: 1px solid var(--border-color);
         }
-
         @media (min-width: 768px) { .mode-switcher { width: 250px; } }
 
         .mode-btn {
@@ -225,16 +367,16 @@
             background: transparent;
             text-align: center;
             color: var(--text-light);
+            transition: all 0.2s;
         }
-
-        .mode-btn.active-sunday { background-color: var(--card-bg); color: var(--sunday-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .mode-btn.active-ot { background-color: var(--card-bg); color: var(--ot-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .mode-btn.active-sunday { background-color: var(--card-bg); color: var(--sunday-color); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .mode-btn.active-ot { background-color: var(--card-bg); color: var(--ot-color); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         .shift-time-wrapper {
             display: flex;
             align-items: center;
             gap: 6px;
-            background: var(--bg-color);
+            background: var(--panel-muted);
             padding: 6px 12px;
             border-radius: 20px;
             border: 1px solid var(--border-color);
@@ -246,7 +388,7 @@
         }
         .shift-time-wrapper input {
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 4px 8px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -258,7 +400,7 @@
 
         .add-dept-form {
             display: flex;
-            background: var(--bg-color);
+            background: var(--panel-muted);
             padding: 4px 4px 4px 14px;
             border-radius: 9999px;
             border: 1px solid var(--border-color);
@@ -266,7 +408,6 @@
             width: 100%;
             box-sizing: border-box;
         }
-
         @media (min-width: 768px) { .add-dept-form { width: 280px; } }
 
         .add-dept-form input {
@@ -277,17 +418,19 @@
             background: transparent;
             color: var(--text-main);
         }
-
         .add-dept-form button {
             background-color: var(--primary-color);
             color: var(--bg-color);
             border: none;
             padding: 8px 16px;
             border-radius: 9999px;
-            font-weight: 600;
-            font-size: 0.85rem; white-space: nowrap; 
+            font-weight: 700;
+            font-size: 0.85rem;
+            white-space: nowrap;
             cursor: pointer;
-        } 
+            transition: transform 0.2s;
+        }
+        .add-dept-form button:hover { transform: scale(1.05); }
         body.dark-theme .add-dept-form button { color: #0f172a; background-color: #f8fafc; }
         
         /* Capture Area Header Styling */
@@ -314,31 +457,108 @@
             display: block !important;
         }
 
-        .download-capture-area { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); } 
+        .download-capture-area {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+        }
+        body.dark-theme .download-capture-area {
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
         .summary-wrapper { display: flex; flex-direction: column; gap: 20px; } 
         @media (min-width: 768px) { .summary-wrapper { display: grid; grid-template-columns: 1fr 1fr; } } 
-        .panel-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } 
-        .panel-title { margin: 0 0 14px 0; font-size: 1.05rem; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; } 
+
+        .panel-card {
+            background: var(--panel-muted);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            margin: 0 0 14px 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
         .report-grid { display: grid; grid-template-columns: 1fr; gap: 8px; } 
         @media (min-width: 480px) { .report-grid { grid-template-columns: repeat(2, 1fr); } } 
-        .report-item { padding: 10px 14px; background: var(--panel-muted); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; border: 1px solid var(--border-color); } 
+
+        .report-item {
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+        }
         .report-item span { font-weight: 700; color: var(--primary-color); } 
-        .extra-container { grid-column: 1 / -1; background: var(--panel-muted); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-around; align-items: center; margin-top: 8px; } 
-        .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; } 
-        .extra-btn { background: var(--card-bg); border: 1px solid var(--border-color); width: 28px; height: 28px; border-radius: 50%; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; } 
+
+        .extra-container {
+            grid-column: 1 / -1;
+            background: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .extra-control { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; } 
+        .extra-btn {
+            background: var(--panel-muted);
+            border: 1px solid var(--border-color);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .extra-btn:hover { transform: scale(1.1); }
         .extra-val { font-size: 0.95rem; font-weight: 700; min-width: 14px; text-align: center; } 
+
         .grand-footer { text-align: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border-color); } 
         .sunday-theme .grand-total-text { color: var(--sunday-color); font-size: 1.1rem; font-weight: 800; } 
         .ot-theme .grand-total-text { color: var(--ot-color); font-size: 1.1rem; font-weight: 800; } 
-        .ot-food-breakdown { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--text-main); margin-top: 8px; background: var(--panel-muted); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); } 
+
+        .ot-food-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.88rem;
+            color: var(--text-main);
+            margin-top: 8px;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
         .food-row { display: flex; justify-content: space-between; align-items: center; } 
         
         .filtered-horizontal-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; } 
         @media (min-width: 480px) { .filtered-horizontal-grid { grid-template-columns: repeat(2, 1fr); } } 
         .capture-mode-active .filtered-horizontal-grid { max-height: none !important; overflow-y: visible !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; } 
 
-        .filtered-dept-group { background: var(--panel-muted); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; } 
-        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; color: var(--primary-color); background: var(--dept-header-bg); } 
+        .filtered-dept-group { background: var(--panel-muted); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; } 
+        .filtered-dept-header { font-size: 0.85rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; margin-bottom: 6px; color: var(--primary-color); background: var(--dept-header-bg); } 
         .sunday-theme .filtered-dept-header { border-left: 3px solid var(--sunday-color); } 
         .ot-theme .filtered-dept-header { border-left: 3px solid var(--ot-color); } 
         .filtered-vertical-list { padding: 0; margin: 0; list-style: none; } 
@@ -358,10 +578,30 @@
         body.dark-theme .badge-no { background-color: #451a1a; color: #f87171; }
         
         .download-action-container { text-align: center; margin: 15px 0 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; } 
-        .main-download-btn { width: 100%; max-width: 320px; box-sizing: border-box; justify-content: center; font-size: 1.05rem; padding: 12px; border: none; border-radius: 25px; cursor: pointer; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; } 
-        .sunday-theme .main-download-btn { background-color: var(--sunday-color); } 
-        .ot-theme .main-download-btn { background-color: var(--ot-color); } 
         
+        .main-download-btn {
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+            justify-content: center;
+            font-size: 1.05rem;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        } 
+        .sunday-theme .main-download-btn { background-color: var(--sunday-color); } 
+        .sunday-theme .main-download-btn:hover { background-color: #dc2626; transform: translateY(-2px); }
+        .ot-theme .main-download-btn { background-color: var(--ot-color); } 
+        .ot-theme .main-download-btn:hover { background-color: #059669; transform: translateY(-2px); }
+
         .main-save-btn {
             width: 100%;
             max-width: 320px;
@@ -406,29 +646,95 @@
         .departments-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } 
         @media (min-width: 600px) { .departments-grid { grid-template-columns: repeat(2, 1fr); } } 
         @media (min-width: 900px) { .departments-grid { grid-template-columns: repeat(3, 1fr); } } 
-        .dept-card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); } 
+        
+        .dept-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dept-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
+            border-color: rgba(255, 255, 255, 0.55);
+        }
+        body.dark-theme .dept-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
         .dept-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; } 
-        .title-container { display: flex; align-items: center; gap: 4px; } 
+        .title-container { display: flex; align-items: center; gap: 6px; } 
         .dept-title { font-size: 1rem; color: var(--primary-color); margin: 0; font-weight: 700; } 
         .delete-dept-btn { background: transparent; border: none; color: var(--sunday-color); font-size: 1.1rem; cursor: pointer; display: none; } 
-        .add-emp-form { display: flex; gap: 4px; margin-bottom: 12px; } 
-        .add-emp-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: var(--bg-color); color: var(--text-main); } 
-        .add-emp-form button { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; } 
+        
+        .add-emp-form { display: flex; gap: 6px; margin-bottom: 12px; } 
+        .add-emp-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            transition: all 0.25s ease;
+        } 
+        body.dark-theme .add-emp-form input {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .add-emp-form input:focus {
+            background: rgba(255, 255, 255, 0.6);
+            border-color: var(--primary-color);
+        }
+        body.dark-theme .add-emp-form input:focus {
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .add-emp-form button {
+            background-color: var(--panel-muted);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-emp-form button:hover { transform: scale(1.05); background: rgba(255,255,255,0.6); }
+        body.dark-theme .add-emp-form button:hover { background: rgba(15, 23, 42, 0.6); }
+
         .emp-list { list-style: none; padding: 0; margin: 0; } 
         .emp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--border-color); } 
         .emp-item:last-child { border-bottom: none; } 
         .name-container { display: flex; align-items: center; gap: 4px; } 
-        .emp-name { font-weight: 500; font-size: 0.9rem; } 
+        .emp-name { font-weight: 600; font-size: 0.9rem; } 
         .btn-group { display: flex; gap: 4px; } 
-        .status-toggle-btn { border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.72rem; min-width: 45px; text-align: center; background: var(--card-bg); color: var(--text-main); cursor: pointer; } 
+        .status-toggle-btn {
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            min-width: 45px;
+            text-align: center;
+            background: rgba(255,255,255,0.3);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .status-toggle-btn:hover { transform: scale(1.05); }
+        body.dark-theme .status-toggle-btn { background: rgba(15, 23, 42, 0.3); }
         
         .sunday-theme .btn-present { background-color: var(--sunday-bg); color: var(--sunday-color); border-color: var(--sunday-color); } 
-        .sunday-theme .btn-absent { background-color: var(--bg-color); color: var(--text-light); } 
+        .sunday-theme .btn-absent { background-color: rgba(255,255,255,0.1); color: var(--text-light); } 
         
         .ot-theme .btn-nasto-active { background-color: var(--ot-bg); color: var(--ot-color); border-color: var(--ot-color); } 
         .ot-theme .btn-faral-active { background-color: var(--faral-bg); color: var(--faral-color); border-color: var(--faral-color); } 
         .ot-theme .btn-only-ot-active { background-color: var(--blue-bg); color: var(--blue-color); border-color: var(--blue-color); } 
-        .ot-theme .btn-inactive { background-color: var(--bg-color); color: var(--text-light); } 
+        .ot-theme .btn-inactive { background-color: rgba(255,255,255,0.1); color: var(--text-light); } 
         
         .delete-btn { background: none; border: none; color: var(--sunday-color); font-size: 1.1rem; padding: 2px 4px; cursor: pointer; display: none; } 
         .no-active-msg, .no-dept-msg { color: var(--text-light); font-size: 0.85rem; font-style: italic; text-align: center; width: 100%; padding: 15px 0; grid-column: 1/-1; } 
@@ -436,8 +742,21 @@
 </head>
 <body class="sunday-theme">
 
+<div class="background-decor">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+</div>
+
 <div class="container">
     <header>
+        <!-- Cloud Sync Pill Status Button (from screenshot) -->
+        <div class="cloud-status-wrapper">
+            <button class="cloud-status-pill" id="cloud-status-pill" onclick="toggleCloudSync()" title="Toggle Cloud Sync">
+                <span id="cloud-status-icon">☁️</span>
+                <span id="cloud-status-text">Cloud Synced</span>
+            </button>
+        </div>
+
         <div class="title-wrapper">
             <h1 id="main-title">📊 ઓફિસ એટેન્ડન્સ પ્લાનર</h1>
             <button id="main-edit-title-btn" class="edit-title-btn" onclick="editMainTitle()">✏️</button>
@@ -555,6 +874,7 @@
     const dbRef = firebase.database().ref();
 
     let hasUnsavedChanges = false;
+    let isCloudSyncEnabled = JSON.parse(localStorage.getItem('officeCloudSyncEnabled')) !== false;
 
     function updateSaveButtonState() {
         const saveBtn = document.getElementById('main-save-cloud-btn');
@@ -563,10 +883,18 @@
 
         if (hasUnsavedChanges) {
             saveBtn.classList.add('unsaved');
-            labelSaveBtn.innerText = currentLang === 'gu' ? "💾 સેવ કરો (નવા ફેરફાર છે)" : "💾 Save Changes (Unsaved)";
+            if (isCloudSyncEnabled) {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "💾 સેવ કરો (નવા ફેરફાર છે)" : "💾 Save Changes (Unsaved)";
+            } else {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "💾 સેવ કરો (નવા લોકલ ફેરફાર)" : "💾 Save Changes (Local)";
+            }
         } else {
             saveBtn.classList.remove('unsaved');
-            labelSaveBtn.innerText = currentLang === 'gu' ? "💾 ડેટાબેઝમાં સેવ કરો" : "💾 Save to Database";
+            if (isCloudSyncEnabled) {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "💾 ડેટાબેઝમાં સેવ કરો" : "💾 Save to Database";
+            } else {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "💾 લોકલ સેવ કરો" : "💾 Save Locally";
+            }
         }
     }
 
@@ -608,8 +936,38 @@
         updateSaveButtonState();
 
         const labelSaveBtn = document.getElementById('label-save-btn');
+        const statusText = document.getElementById('cloud-status-text');
+        const pill = document.getElementById('cloud-status-pill');
+
+        if (!isCloudSyncEnabled) {
+            if (labelSaveBtn) {
+                labelSaveBtn.innerText = currentLang === 'gu' ? "⏳ સેવ થઈ રહ્યું છે (લોકલ)..." : "⏳ Saving Locally...";
+            }
+            if (pill && statusText) {
+                pill.classList.add('saving');
+                statusText.innerText = currentLang === 'gu' ? "Saved Offline" : "Saved Offline";
+            }
+            setTimeout(() => {
+                if (labelSaveBtn) {
+                    labelSaveBtn.innerText = currentLang === 'gu' ? "💾 સ્થાનિક રીતે સેવ થયું! (Offline)" : "💾 Saved Locally! (Offline)";
+                }
+                if (pill && statusText) {
+                    pill.classList.remove('saving');
+                }
+                setTimeout(() => {
+                    updateSaveButtonState();
+                    updateCloudSyncUI();
+                }, 2000);
+            }, 500);
+            return;
+        }
+
         if (labelSaveBtn) {
             labelSaveBtn.innerText = currentLang === 'gu' ? "⏳ સેવ થઈ રહ્યું છે..." : "⏳ Saving...";
+        }
+        if (pill && statusText) {
+            pill.classList.add('saving');
+            statusText.innerText = currentLang === 'gu' ? "Syncing..." : "Syncing...";
         }
 
         Promise.all([
@@ -622,33 +980,47 @@
             if (labelSaveBtn) {
                 labelSaveBtn.innerText = currentLang === 'gu' ? "✅ સફળતાપૂર્વક સેવ થઈ ગયું!" : "✅ Saved Successfully!";
             }
+            if (pill && statusText) {
+                pill.classList.remove('saving');
+                statusText.innerText = currentLang === 'gu' ? "Cloud Synced" : "Cloud Synced";
+            }
             setTimeout(() => {
                 updateSaveButtonState();
+                updateCloudSyncUI();
             }, 2000);
         }).catch(err => {
             console.error("Error saving data to Firebase:", err);
             alert(currentLang === 'gu' ? "ભૂલ: ડેટા સેવ કરવામાં નિષ્ફળતા મળી!" : "Error: Failed to save data!");
             hasUnsavedChanges = true;
             updateSaveButtonState();
+            if (pill && statusText) {
+                pill.classList.remove('saving');
+            }
+            updateCloudSyncUI();
         });
     }
 
+    // Firebase listeners that respect isCloudSyncEnabled and hasUnsavedChanges
     dbRef.child('masterData').on('value', (snap) => {
+        if (!isCloudSyncEnabled) return;
         if (hasUnsavedChanges) return;
         if (snap.val()) masterData = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('attendanceRecords').on('value', (snap) => {
+        if (!isCloudSyncEnabled) return;
         if (hasUnsavedChanges) return;
         if (snap.val()) attendanceRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('extraFoodRecords').on('value', (snap) => {
+        if (!isCloudSyncEnabled) return;
         if (hasUnsavedChanges) return;
         if (snap.val()) extraFoodRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') renderAll();
     });
     dbRef.child('shiftTimeRecords').on('value', (snap) => {
+        if (!isCloudSyncEnabled) return;
         if (hasUnsavedChanges) return;
         if (snap.val()) shiftTimeRecords = JSON.parse(snap.val());
         if (typeof renderAll === 'function') {
@@ -657,6 +1029,7 @@
         }
     });
     dbRef.child('officeNames').on('value', (snap) => {
+        if (!isCloudSyncEnabled) return;
         if (hasUnsavedChanges) return;
         if (snap.val()) officeNames = JSON.parse(snap.val());
         if (typeof renderAll === 'function') {
@@ -664,6 +1037,59 @@
             renderAll();
         }
     });
+
+    // Cloud Sync Toggle logic
+    function toggleCloudSync() {
+        isCloudSyncEnabled = !isCloudSyncEnabled;
+        localStorage.setItem('officeCloudSyncEnabled', JSON.stringify(isCloudSyncEnabled));
+        updateCloudSyncUI();
+        updateSaveButtonState();
+        if (isCloudSyncEnabled) {
+            fetchFromFirebaseOnce();
+        } else {
+            renderAll();
+        }
+    }
+
+    function updateCloudSyncUI() {
+        const pill = document.getElementById('cloud-status-pill');
+        const statusText = document.getElementById('cloud-status-text');
+        const statusIcon = document.getElementById('cloud-status-icon');
+        if (!pill || !statusText || !statusIcon) return;
+
+        if (isCloudSyncEnabled) {
+            pill.classList.remove('offline');
+            statusIcon.innerText = "☁️";
+            statusText.innerText = "Cloud Synced";
+        } else {
+            pill.classList.add('offline');
+            statusIcon.innerText = "☁️";
+            statusText.innerText = "Saved Offline";
+        }
+    }
+
+    function varTextLightColor() {
+        return document.body.classList.contains('dark-theme') ? '#94a3b8' : '#475569';
+    }
+
+    function fetchFromFirebaseOnce() {
+        if (!isCloudSyncEnabled) return;
+        dbRef.once('value', (snap) => {
+            if (hasUnsavedChanges) return;
+            const val = snap.val();
+            if (val) {
+                if (val.masterData) masterData = JSON.parse(val.masterData);
+                if (val.attendanceRecords) attendanceRecords = JSON.parse(val.attendanceRecords);
+                if (val.extraFoodRecords) extraFoodRecords = JSON.parse(val.extraFoodRecords);
+                if (val.shiftTimeRecords) shiftTimeRecords = JSON.parse(val.shiftTimeRecords);
+                if (val.officeNames) officeNames = JSON.parse(val.officeNames);
+                
+                document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
+                document.getElementById('main-title').innerText = officeNames[currentLang];
+                renderAll();
+            }
+        });
+    }
     // ═══════════ End Firebase Setup ═══════════
 
     const labels = {
@@ -720,6 +1146,7 @@
         document.body.classList.toggle('dark-theme');
         const activeTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
         localStorage.setItem('officeTheme', activeTheme);
+        updateCloudSyncUI(); // Refresh toggle switch colors for dark theme
     }
 
     function exportBackupData() {
@@ -834,7 +1261,7 @@
         if (isUnlocked) {
             lockBtn.innerText = "🔓 Unlocked (Edit Mode)";
             lockBtn.classList.add('unlocked');
-            mainEditBtn.style.display = 'inline-block';
+            mainEditBtn.style.display = 'inline-flex';
         } else {
             lockBtn.innerText = "🔒 Lock (Safe Mode)";
             lockBtn.classList.remove('unlocked');
@@ -893,6 +1320,7 @@
         document.getElementById('label-shift-time').innerText = labels[currentLang].shiftTimeText;
         document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
         updateSaveButtonState();
+        updateCloudSyncUI();
         switchMode(currentMode);
     }
 
@@ -1077,7 +1505,7 @@
             deptCard.className = 'dept-card';
             
             let deleteStyle = isUnlocked ? 'display: inline-block;' : 'display: none;';
-            let editStyle = isUnlocked ? 'display: inline-block;' : 'display: none;';
+            let editStyle = isUnlocked ? 'display: inline-flex;' : 'display: none;';
             let showEmpInputStyle = isUnlocked ? 'display: flex;' : 'display: none;';
             
             let cardHTML = `
@@ -1229,11 +1657,13 @@
     document.getElementById('main-title').innerText = officeNames[currentLang];
     document.getElementById('shift-time-input').value = shiftTimeRecords[selectedDate] || '';
     document.getElementById('main-erase-btn').innerText = labels[currentLang].eraseBtnText;
+    updateSaveButtonState();
+    updateCloudSyncUI();
     switchMode('sunday');
 
-    // Auto-populate Firebase if database is empty (first load)
+    // Auto-populate Firebase if database is empty and sync is active (first load)
     dbRef.child('masterData').once('value', (snap) => {
-        if (!snap.val()) {
+        if (isCloudSyncEnabled && !snap.val()) {
             pushAllToFirebase();
         }
     });
