@@ -18,27 +18,27 @@
             --ot-bg: rgba(16, 185, 129, 0.12);
             --faral-color: #f59e0b;
             --faral-bg: rgba(245, 158, 11, 0.12);
-            --bg-color: #f1f5f9;
-            --card-bg: rgba(255, 255, 255, 0.45);
-            --text-main: #1e293b;
-            --text-light: #475569;
+            --bg-color: #475569;
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #0f172a;
+            --text-light: #1e293b;
             --border-color: rgba(255, 255, 255, 0.35);
             --blue-color: #3b82f6;
             --blue-bg: rgba(59, 130, 246, 0.12);
-            --panel-muted: rgba(255, 255, 255, 0.25);
-            --dept-header-bg: rgba(255, 255, 255, 0.35);
+            --panel-muted: rgba(255, 255, 255, 0.35);
+            --dept-header-bg: rgba(255, 255, 255, 0.45);
         }
 
         /* Dark Mode Theme Variables */
         body.dark-theme {
             --primary-color: #f8fafc;
             --bg-color: #090d16;
-            --card-bg: rgba(15, 23, 42, 0.45);
-            --text-main: #cbd5e1;
-            --text-light: #94a3b8;
+            --card-bg: rgba(15, 23, 42, 0.65);
+            --text-main: #f1f5f9;
+            --text-light: #cbd5e1;
             --border-color: rgba(255, 255, 255, 0.08);
-            --panel-muted: rgba(15, 23, 42, 0.25);
-            --dept-header-bg: rgba(15, 23, 42, 0.35);
+            --panel-muted: rgba(15, 23, 42, 0.45);
+            --dept-header-bg: rgba(15, 23, 42, 0.55);
             --sunday-bg: rgba(239, 68, 68, 0.18);
             --ot-bg: rgba(16, 185, 129, 0.18);
             --faral-bg: rgba(245, 158, 11, 0.18);
@@ -47,7 +47,7 @@
 
         body {
             font-family: 'Outfit', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #f5f3ff 100%);
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
             margin: 0;
             padding: 16px;
             color: var(--text-main);
@@ -56,7 +56,7 @@
             min-height: 100vh;
         }
         body.dark-theme {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
         }
 
         /* Ambient Glowing Background Blobs */
@@ -85,7 +85,7 @@
         .ot-theme .blob-1 { background: #10b981; top: -50px; left: -50px; }
         .ot-theme .blob-2 { background: #3b82f6; bottom: -50px; right: -50px; }
         body.dark-theme .bg-blob {
-            opacity: 0.18;
+            opacity: 0.22;
             filter: blur(160px);
         }
 
@@ -99,16 +99,16 @@
             margin-bottom: 25px;
             position: relative;
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px 16px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06);
             transition: all 0.3s ease;
         }
         body.dark-theme header {
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
         }
 
         /* Cloud Sync Pill Status Button */
@@ -127,8 +127,10 @@
             }
         }
         .cloud-status-pill {
-            background-color: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.4);
+            background-color: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: #10b981;
             padding: 6px 16px;
             border-radius: 9999px;
@@ -231,8 +233,9 @@
         }
 
         .lang-btn, .theme-btn, .lock-btn, .erase-btn, .backup-btn {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--border-color);
             padding: 6px 14px;
             border-radius: 20px;
@@ -289,11 +292,11 @@
             gap: 12px;
             margin-bottom: 25px;
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             padding: 14px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
             border: 1px solid var(--border-color);
         }
         body.dark-theme .controls-row {
@@ -460,13 +463,13 @@
 
         .download-capture-area {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             padding: 16px;
             border-radius: 20px;
             margin-bottom: 20px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
         }
         body.dark-theme .download-capture-area {
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
@@ -536,6 +539,8 @@
 
         .panel-card {
             background: var(--panel-muted);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 16px;
             padding: 16px;
             border: 1px solid var(--border-color);
@@ -556,6 +561,8 @@
         .report-item {
             padding: 10px 14px;
             background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
@@ -709,6 +716,8 @@
         
         .dept-card {
             background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 16px;
             padding: 16px;
             border: 1px solid var(--border-color);
@@ -716,12 +725,12 @@
         }
         .dept-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.1);
             border-color: rgba(255, 255, 255, 0.55);
         }
         body.dark-theme .dept-card:hover {
             border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
         }
 
         .dept-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; } 
